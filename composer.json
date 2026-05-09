@@ -1,0 +1,33 @@
+{
+    "name": "flowrise-hms/billing",
+    "type": "laravel-module",
+    "description": "Billing, invoicing, payments, and gateway integrations for FlowRise HMS",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "flowrise-hms/core": "dev-main",
+        "flowrise-hms/patient": "dev-main",
+        "barryvdh/laravel-dompdf": "^3.1",
+        "flowrise-hms/appointment": "dev-main"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Billing\\": "app/",
+            "Modules\\Billing\\Database\\Factories\\": "database/factories/",
+            "Modules\\Billing\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Billing\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
