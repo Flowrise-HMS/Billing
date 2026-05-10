@@ -13,6 +13,7 @@ class BillingDatabaseSeeder extends Seeder
     {
         $this->call([
             BillingCustomPermissionSeeder::class,
+            BillingShieldPermissionsSeeder::class,
         ]);
     }
 }
