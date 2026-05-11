@@ -40,7 +40,7 @@ class EncounterInvoiceService
                     'branch_id' => $encounter->branch_id,
                     'patient_id' => $encounter->patient_id,
                     'encounter_id' => $encounter->id,
-                    'invoice_number' => Invoice::generateInvoiceNumber(),
+                    'invoice_number' => Invoice::generateInvoiceNumber((string) $encounter->branch_id),
                     'status' => InvoiceStatus::Draft,
                     'invoice_type' => InvoiceType::Final,
                     'currency' => 'GHS',

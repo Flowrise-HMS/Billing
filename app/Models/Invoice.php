@@ -5,6 +5,8 @@ namespace Modules\Billing\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Appointment\Models\Appointment;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
@@ -62,13 +64,41 @@ class Invoice extends BaseModel
         'metadata' => 'array',
     ];
 
-    public static function generateInvoiceNumber(): string
+    public static function generateInvoiceNumber(string $branchId): string
     {
-        $prefix = 'INV';
-        $date = now()->format('Ymd');
-        $sequence = static::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1;
+        return DB::transaction(function () use ($branchId) {
+            $day = now()->toDateString();
 
-        return sprintf('%s-%s-%05d', $prefix, $date, $sequence);
+            $row = DB::table('invoice_number_sequences')
+                ->where('branch_id', $branchId)
+                ->where('sequence_date', $day)
+                ->lockForUpdate()
+                ->first();
+
+            if ($row === null) {
+                $next = 1;
+                DB::table('invoice_number_sequences')->insert([
+                    'id' => (string) Str::uuid(),
+                    'branch_id' => $branchId,
+                    'sequence_date' => $day,
+                    'last_sequence' => $next,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                $next = (int) $row->last_sequence + 1;
+                DB::table('invoice_number_sequences')
+                    ->where('id', $row->id)
+                    ->update([
+                        'last_sequence' => $next,
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            $branchFrag = substr(md5((string) $branchId), 0, 8);
+
+            return sprintf('INV-%s-%s-%05d', now()->format('Ymd'), $branchFrag, $next);
+        });
     }
 
     public function organization(): BelongsTo

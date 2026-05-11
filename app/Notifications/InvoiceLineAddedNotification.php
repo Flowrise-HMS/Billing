@@ -2,6 +2,8 @@
 
 namespace Modules\Billing\Notifications;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Billing\Models\InvoiceLine;
@@ -9,9 +11,9 @@ use Modules\Billing\Notifications\Concerns\BuildsPatientFacingChannels;
 
 // todo:: payment gateway yet to be implemented
 // (when wired, append a pay-now URL/MoMo prompt to both mail and SMS bodies)
-class InvoiceLineAddedNotification extends Notification
+class InvoiceLineAddedNotification extends Notification implements ShouldQueue
 {
-    use BuildsPatientFacingChannels;
+    use BuildsPatientFacingChannels, Queueable;
 
     public function __construct(protected InvoiceLine $line) {}
 
@@ -39,19 +41,13 @@ class InvoiceLineAddedNotification extends Notification
 
     public function toSms(object $notifiable): string
     {
-        $line = $this->line->loadMissing(['invoice', 'service']);
+        $line = $this->line->loadMissing(['invoice']);
         $invoice = $line->invoice;
-        $serviceName = $line->service?->name ?? $line->description ?? __('Service');
 
         return __(
-            ':service (x:qty) added to invoice :number. New total :total :currency. Balance due :balance :currency.',
+            'Billing update: invoice :number changed. Sign in to the patient portal to view details.',
             [
-                'service' => $serviceName,
-                'qty' => (string) $line->quantity,
                 'number' => $invoice->invoice_number,
-                'total' => $invoice->total,
-                'balance' => $invoice->balanceDue(),
-                'currency' => $invoice->currency,
             ]
         );
     }

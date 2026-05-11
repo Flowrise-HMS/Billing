@@ -25,7 +25,7 @@ class ManualInvoiceService
                 'organization_id' => $branch->organization_id,
                 'branch_id' => $branchId,
                 'patient_id' => $patientId,
-                'invoice_number' => Invoice::generateInvoiceNumber(),
+                'invoice_number' => Invoice::generateInvoiceNumber($branchId),
                 'status' => InvoiceStatus::Draft,
                 'invoice_type' => $invoiceType,
                 'currency' => strtoupper(substr($currency, 0, 3)),

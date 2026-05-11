@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Services;
 
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\PaymentIntentStatus;
@@ -43,10 +44,6 @@ class WebhookPaymentService
 
         $idempotencyKey = strtolower($driver).':'.$parsed['reference'];
 
-        if (BillingWebhookEvent::query()->where('idempotency_key', $idempotencyKey)->exists()) {
-            return;
-        }
-
         $intent = PaymentIntent::query()
             ->where('client_reference', $parsed['reference'])
             ->where('branch_id', $branchId)
@@ -60,9 +57,32 @@ class WebhookPaymentService
         $invoice = Invoice::query()->withoutGlobalScopes()->with('lines')->findOrFail($intent->invoice_id);
 
         DB::transaction(function () use ($invoice, $intent, $parsed, $idempotencyKey, $config) {
+            try {
+                BillingWebhookEvent::query()->create([
+                    'driver' => $config->driver,
+                    'idempotency_key' => $idempotencyKey,
+                    'payment_id' => null,
+                    'processed_at' => null,
+                    'metadata' => ['reference' => $parsed['reference'], 'status' => 'processing'],
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                // Another worker claimed this key; serialize on the existing row.
+            }
+
+            $eventRow = BillingWebhookEvent::query()
+                ->where('idempotency_key', $idempotencyKey)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($eventRow->processed_at !== null) {
+                return;
+            }
+
             $amountMajor = isset($parsed['amount_minor'])
                 ? bcdiv((string) $parsed['amount_minor'], '100', 2)
                 : (string) $intent->amount;
+
+            $invoice = $invoice->fresh(['lines']);
 
             $due = $invoice->balanceDue();
             if (bccomp($amountMajor, $due, 2) > 0) {
@@ -72,6 +92,16 @@ class WebhookPaymentService
             $allocations = $this->allocationBuilder->allocateAmountAcrossUnpaidLines($invoice, $amountMajor);
 
             if ($allocations === []) {
+                BillingWebhookEvent::query()
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->update([
+                        'processed_at' => now(),
+                        'metadata' => [
+                            'reference' => $parsed['reference'],
+                            'status' => 'skipped_no_allocations',
+                        ],
+                    ]);
+
                 return;
             }
 
@@ -87,13 +117,13 @@ class WebhookPaymentService
                 metadata: ['source' => 'webhook', 'driver' => $config->driver],
             );
 
-            BillingWebhookEvent::query()->create([
-                'driver' => $config->driver,
-                'idempotency_key' => $idempotencyKey,
-                'payment_id' => $payment->id,
-                'processed_at' => now(),
-                'metadata' => ['reference' => $parsed['reference']],
-            ]);
+            BillingWebhookEvent::query()
+                ->where('idempotency_key', $idempotencyKey)
+                ->update([
+                    'payment_id' => $payment->id,
+                    'processed_at' => now(),
+                    'metadata' => ['reference' => $parsed['reference']],
+                ]);
 
             $intent->update(['status' => PaymentIntentStatus::Succeeded]);
         });

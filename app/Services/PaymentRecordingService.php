@@ -12,6 +12,7 @@ use Modules\Billing\Events\InvoiceBecameFullyPaid;
 use Modules\Billing\Events\InvoiceBecamePartiallyPaid;
 use Modules\Billing\Events\InvoiceTotalsUpdated;
 use Modules\Billing\Events\PaymentConfirmed;
+use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Models\Payment;
 use Modules\Billing\Models\PaymentAllocation;
@@ -49,7 +50,28 @@ class PaymentRecordingService
 
         return DB::transaction(function () use ($allocations, $method, $gateway, $currency, $patientId, $branchId, $recordedBy, $providerTransactionId, $metadata, $totalAmount) {
             $lineIds = array_keys($allocations);
-            $lines = InvoiceLine::query()->whereIn('id', $lineIds)->with('invoice')->get()->keyBy('id');
+            sort($lineIds);
+
+            $firstLine = InvoiceLine::query()->whereIn('id', $lineIds)->first();
+            if (! $firstLine) {
+                throw new InvalidArgumentException('One or more invoice lines were not found.');
+            }
+
+            $invoiceId = $firstLine->invoice_id;
+
+            Invoice::query()
+                ->withoutGlobalScopes()
+                ->whereKey($invoiceId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lines = InvoiceLine::query()
+                ->whereIn('id', $lineIds)
+                ->with('invoice')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
 
             if ($lines->count() !== count($lineIds)) {
                 throw new InvalidArgumentException('One or more invoice lines were not found.');

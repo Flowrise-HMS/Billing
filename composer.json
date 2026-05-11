@@ -8,7 +8,8 @@
         "flowrise-hms/core": "dev-main",
         "flowrise-hms/patient": "dev-main",
         "barryvdh/laravel-dompdf": "^3.1",
-        "flowrise-hms/appointment": "dev-main"
+        "flowrise-hms/appointment": "dev-main",
+        "stripe/stripe-php": "^17.0"
     },
     "extra": {
         "laravel": {

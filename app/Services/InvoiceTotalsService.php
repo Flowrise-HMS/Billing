@@ -4,6 +4,7 @@ namespace Modules\Billing\Services;
 
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
+use Modules\Billing\Exceptions\InvoiceConcurrentModificationException;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 
@@ -11,6 +12,8 @@ class InvoiceTotalsService
 {
     public function recalculate(Invoice $invoice): Invoice
     {
+        $invoice = $invoice->fresh();
+
         $lines = $invoice->lines()->get();
         $subtotal = '0';
         $discount = '0';
@@ -30,30 +33,40 @@ class InvoiceTotalsService
 
         $total = bcadd(bcsub(bcadd($subtotal, $tax, 2), $discount, 2), '0', 2);
 
-        $invoice->subtotal = $subtotal;
-        $invoice->discount_total = $discount;
-        $invoice->tax_total = $tax;
-        $invoice->total = $total;
-        $invoice->amount_paid = $paid;
-        $invoice->lock_version = $invoice->lock_version + 1;
+        $expectedLock = (int) $invoice->lock_version;
+        $newLockVersion = $expectedLock + 1;
 
         if ($invoice->status === InvoiceStatus::Draft || $invoice->status === InvoiceStatus::Void) {
-            $invoice->save();
-
-            return $invoice->fresh(['lines']);
-        }
-
-        if (bccomp($total, '0', 2) > 0 && bccomp($paid, $total, 2) >= 0) {
-            $invoice->status = InvoiceStatus::Paid;
+            $newStatus = $invoice->status;
+        } elseif (bccomp($total, '0', 2) > 0 && bccomp($paid, $total, 2) >= 0) {
+            $newStatus = InvoiceStatus::Paid;
         } elseif (bccomp($paid, '0', 2) > 0) {
-            $invoice->status = InvoiceStatus::PartiallyPaid;
+            $newStatus = InvoiceStatus::PartiallyPaid;
         } else {
-            $invoice->status = InvoiceStatus::Issued;
+            $newStatus = InvoiceStatus::Issued;
         }
 
-        $invoice->save();
+        $affected = Invoice::query()
+            ->withoutGlobalScopes()
+            ->whereKey($invoice->id)
+            ->where('lock_version', $expectedLock)
+            ->update([
+                'subtotal' => $subtotal,
+                'discount_total' => $discount,
+                'tax_total' => $tax,
+                'total' => $total,
+                'amount_paid' => $paid,
+                'lock_version' => $newLockVersion,
+                'status' => $newStatus->value,
+            ]);
 
-        return $invoice->fresh(['lines']);
+        if ($affected === 0) {
+            throw new InvoiceConcurrentModificationException(
+                'Invoice was modified by another process. Refresh and try again.'
+            );
+        }
+
+        return Invoice::query()->withoutGlobalScopes()->with('lines')->findOrFail($invoice->id);
     }
 
     public function syncLineAmountPaidFromAllocations(InvoiceLine $line): void

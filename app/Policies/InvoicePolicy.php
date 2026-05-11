@@ -7,28 +7,59 @@ use Modules\Billing\Models\Invoice;
 
 class InvoicePolicy
 {
+    protected function sameBranch(User $user, Invoice $invoice): bool
+    {
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        $branchId = $user->branch_id;
+
+        return $branchId !== null && (string) $branchId === (string) $invoice->branch_id;
+    }
+
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('ViewAny Invoice');
     }
 
     public function view(User $user, Invoice $invoice): bool
     {
-        return true;
+        if (! $user->can('View Invoice')) {
+            return false;
+        }
+
+        return $this->sameBranch($user, $invoice);
     }
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('Create Invoice');
     }
 
     public function update(User $user, Invoice $invoice): bool
     {
-        return $invoice->isDraft();
+        if (! $user->can('Update Invoice')) {
+            return false;
+        }
+
+        if (! $invoice->isDraft()) {
+            return false;
+        }
+
+        return $this->sameBranch($user, $invoice);
     }
 
     public function delete(User $user, Invoice $invoice): bool
     {
-        return $invoice->isDraft();
+        if (! $user->can('Delete Invoice')) {
+            return false;
+        }
+
+        if (! $invoice->isDraft()) {
+            return false;
+        }
+
+        return $this->sameBranch($user, $invoice);
     }
 }

@@ -73,18 +73,20 @@ class InvoiceLineSyncService
                 ];
             }
 
-            if ($line) {
-                $line->update($payload);
-                $line = $line->fresh();
-                DB::afterCommit(fn () => Event::dispatch(new InvoiceLineUpdated($line)));
-            } else {
-                $line = $invoice->lines()->create(array_merge($payload, [
-                    'billable_type' => $item->getMorphClass(),
-                    'billable_id' => $item->id,
-                    'amount_paid' => 0,
-                ]));
-                DB::afterCommit(fn () => Event::dispatch(new InvoiceLineAdded($line)));
-            }
+            InvoiceLine::withoutEvents(function () use (&$line, $payload, $invoice, $item) {
+                if ($line) {
+                    $line->update($payload);
+                    $line = $line->fresh();
+                    DB::afterCommit(fn () => Event::dispatch(new InvoiceLineUpdated($line)));
+                } else {
+                    $line = $invoice->lines()->create(array_merge($payload, [
+                        'billable_type' => $item->getMorphClass(),
+                        'billable_id' => $item->id,
+                        'amount_paid' => 0,
+                    ]));
+                    DB::afterCommit(fn () => Event::dispatch(new InvoiceLineAdded($line)));
+                }
+            });
 
             $this->totalsService->recalculate($invoice->fresh(['lines']));
         });

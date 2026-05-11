@@ -25,7 +25,7 @@ class PaystackDriver implements PaymentGatewayDriver
             ->acceptJson()
             ->post('https://api.paystack.co/transaction/initialize', [
                 'email' => $email,
-                'amount' => (int) round((float) $intent->amount * 100),
+                'amount' => (int) bcmul((string) $intent->amount, '100', 0),
                 'currency' => strtoupper($intent->currency),
                 'reference' => $intent->client_reference,
                 'callback_url' => $intent->metadata['callback_url'] ?? null,

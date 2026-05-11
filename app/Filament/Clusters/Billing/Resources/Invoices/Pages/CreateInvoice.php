@@ -25,7 +25,7 @@ class CreateInvoice extends CreateRecord
 
         $data['branch_id'] = $branchId;
         $data['organization_id'] = $branch->organization_id;
-        $data['invoice_number'] = Invoice::generateInvoiceNumber();
+        $data['invoice_number'] = Invoice::generateInvoiceNumber((string) $branchId);
         $data['status'] = InvoiceStatus::Draft->value;
         $data['invoice_type'] = $data['invoice_type'] ?? InvoiceType::Standalone->value;
         $data['currency'] = strtoupper(substr((string) ($data['currency'] ?? 'GHS'), 0, 3));

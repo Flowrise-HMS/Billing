@@ -3,7 +3,6 @@
 namespace Modules\Billing\Services;
 
 use Carbon\CarbonInterface;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Models\Invoice;
@@ -158,16 +157,19 @@ class RevenueReportService
             $query->where('branch_id', $branchId);
         }
 
-        return $query
-            ->get(['total', 'amount_paid'])
-            ->reduce(
-                fn (string $carry, Invoice $invoice): string => bcadd(
-                    $carry,
-                    bcsub((string) $invoice->total, (string) $invoice->amount_paid, 2),
-                    2
-                ),
-                '0'
-            );
+        $carry = '0';
+        $query->select(['id', 'total', 'amount_paid'])
+            ->chunkById(500, function ($invoices) use (&$carry): void {
+                foreach ($invoices as $invoice) {
+                    $carry = bcadd(
+                        $carry,
+                        bcsub((string) $invoice->total, (string) $invoice->amount_paid, 2),
+                        2
+                    );
+                }
+            });
+
+        return $carry;
     }
 
     /**
@@ -192,29 +194,29 @@ class RevenueReportService
             $query->where('branch_id', $branchId);
         }
 
-        /** @var Collection<int, Invoice> $invoices */
-        $invoices = $query->get();
+        $query->select(['id', 'total', 'amount_paid', 'due_at', 'issued_at', 'created_at'])
+            ->chunkById(500, function ($invoices) use (&$buckets, $atDate): void {
+                foreach ($invoices as $invoice) {
+                    $outstanding = bcsub((string) $invoice->total, (string) $invoice->amount_paid, 2);
+                    if (bccomp($outstanding, '0', 2) <= 0) {
+                        continue;
+                    }
 
-        foreach ($invoices as $invoice) {
-            $outstanding = bcsub((string) $invoice->total, (string) $invoice->amount_paid, 2);
-            if (bccomp($outstanding, '0', 2) <= 0) {
-                continue;
-            }
+                    $anchorDate = $invoice->due_at ?? $invoice->issued_at ?? $invoice->created_at;
+                    $ageDays = $anchorDate ? $anchorDate->diffInDays($atDate, false) : 0;
 
-            $anchorDate = $invoice->due_at ?? $invoice->issued_at ?? $invoice->created_at;
-            $ageDays = $anchorDate ? $anchorDate->diffInDays($atDate, false) : 0;
+                    $bucket = match (true) {
+                        $ageDays <= 0 => 'Current',
+                        $ageDays <= 30 => '1-30 days',
+                        $ageDays <= 60 => '31-60 days',
+                        $ageDays <= 90 => '61-90 days',
+                        default => '90+ days',
+                    };
 
-            $bucket = match (true) {
-                $ageDays <= 0 => 'Current',
-                $ageDays <= 30 => '1-30 days',
-                $ageDays <= 60 => '31-60 days',
-                $ageDays <= 90 => '61-90 days',
-                default => '90+ days',
-            };
-
-            $buckets[$bucket]['amount'] = bcadd($buckets[$bucket]['amount'], $outstanding, 2);
-            $buckets[$bucket]['count']++;
-        }
+                    $buckets[$bucket]['amount'] = bcadd($buckets[$bucket]['amount'], $outstanding, 2);
+                    $buckets[$bucket]['count']++;
+                }
+            });
 
         return collect($buckets)
             ->map(fn (array $values, string $bucket): array => [

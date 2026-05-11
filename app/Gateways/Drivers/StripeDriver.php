@@ -8,9 +8,15 @@ use Modules\Billing\Enums\PaymentIntentStatus;
 use Modules\Billing\Gateways\Contracts\PaymentGatewayDriver;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\PaymentIntent;
+use Stripe\Event;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\Webhook;
+use UnexpectedValueException;
 
 class StripeDriver implements PaymentGatewayDriver
 {
+    public const STRIPE_WEBHOOK_EVENT_ATTRIBUTE = 'stripe_webhook_event';
+
     public function key(): string
     {
         return 'stripe';
@@ -60,19 +66,44 @@ class StripeDriver implements PaymentGatewayDriver
         if (! $secret) {
             return false;
         }
+
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
-        if (! $sigHeader) {
+        if ($payload === '' || ! $sigHeader) {
             return false;
         }
 
-        // Stripe SDK-free verification is non-trivial; require webhook_secret and document production use of stripe-cli verify.
-        // Minimal: compare signed payload using stripe-php would be ideal; here accept if secret matches first part for tests only.
-        return str_contains($sigHeader, 't=');
+        try {
+            $event = Webhook::constructEvent($payload, $sigHeader, $secret, 300);
+        } catch (UnexpectedValueException|SignatureVerificationException) {
+            return false;
+        }
+
+        $request->attributes->set(self::STRIPE_WEBHOOK_EVENT_ATTRIBUTE, $event);
+
+        return true;
     }
 
     public function parseWebhookPayload(Request $request): ?array
     {
+        $event = $request->attributes->get(self::STRIPE_WEBHOOK_EVENT_ATTRIBUTE);
+        if ($event instanceof Event) {
+            if ($event->type !== 'checkout.session.completed') {
+                return null;
+            }
+            $obj = $event->data->object;
+            if (! is_object($obj)) {
+                return null;
+            }
+
+            return [
+                'reference' => (string) ($obj->client_reference_id ?? ''),
+                'amount_minor' => (int) ($obj->amount_total ?? 0),
+                'currency' => strtoupper((string) ($obj->currency ?? 'usd')),
+                'success' => ($obj->payment_status ?? '') === 'paid',
+            ];
+        }
+
         $type = $request->input('type');
         $obj = $request->input('data.object');
         if ($type !== 'checkout.session.completed' || ! is_array($obj)) {
