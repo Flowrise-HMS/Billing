@@ -10,14 +10,13 @@ use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Events\UnpaidBillingNoticeRequired;
-use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Services\InvoiceAllocationBuilder;
 use Modules\Billing\Services\InvoiceIssuanceService;
+use Modules\Billing\Services\InvoiceTotalsService;
 use Modules\Billing\Services\ManualInvoiceService;
 use Modules\Billing\Services\PaymentRecordingService;
 use Modules\Core\Models\Branch;
-use Modules\Core\Models\Service;
 use Tests\TestCase;
 
 class InvoiceIssuanceRegressionTest extends TestCase
@@ -61,7 +60,7 @@ class InvoiceIssuanceRegressionTest extends TestCase
         ]);
 
         // Recalculate totals
-        $invoice = app(\Modules\Billing\Services\InvoiceTotalsService::class)
+        $invoice = app(InvoiceTotalsService::class)
             ->recalculate($invoice->fresh(['lines']));
 
         Event::fake();

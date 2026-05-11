@@ -6,13 +6,13 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Event;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
-use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Events\UnpaidBillingNoticeRequired;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Services\EncounterInvoiceService;
 use Modules\Billing\Services\InvoiceTotalsService;
 use Modules\Clinical\Database\Factories\EncounterFactory;
+use Modules\Clinical\Enums\EncounterStatus;
 use Modules\Clinical\Events\EncounterFinished;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
@@ -41,7 +41,7 @@ class EncounterDischargeBillingTest extends TestCase
 
         $encounter = EncounterFactory::new()
             ->forPatient($patient)
-            ->create(['status' => \Modules\Clinical\Enums\EncounterStatus::FINISHED]);
+            ->create(['status' => EncounterStatus::FINISHED]);
 
         Event::fake([UnpaidBillingNoticeRequired::class]);
 
