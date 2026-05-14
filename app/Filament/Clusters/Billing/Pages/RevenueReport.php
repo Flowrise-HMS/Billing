@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Pages;
 
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -11,6 +12,8 @@ use Modules\Core\Models\Branch;
 
 class RevenueReport extends Page
 {
+    use HasPageShield;
+    
     protected static ?string $cluster = BillingCluster::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedPresentationChartBar;
