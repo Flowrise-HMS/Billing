@@ -40,7 +40,6 @@ class BillingShieldPermissionsSeeder extends Seeder
         ];
 
         $this->giveNamedPermissionsToRole('billing_clerk', $billingFinanceNames, $guard);
-        $this->giveNamedPermissionsToRole('medical_biller', $billingFinanceNames, $guard);
         $this->giveNamedPermissionsToRole('finance_officer', $billingFinanceNames, $guard);
         $this->giveNamedPermissionsToRole('receptionist', $frontDeskInvoiceNames, $guard);
         $this->giveNamedPermissionsToRole('admissions_staff', $frontDeskInvoiceNames, $guard);

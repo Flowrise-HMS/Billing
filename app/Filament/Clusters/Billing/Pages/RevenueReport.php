@@ -13,7 +13,7 @@ use Modules\Core\Models\Branch;
 class RevenueReport extends Page
 {
     use HasPageShield;
-    
+
     protected static ?string $cluster = BillingCluster::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedPresentationChartBar;
