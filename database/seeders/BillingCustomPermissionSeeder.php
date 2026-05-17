@@ -11,11 +11,11 @@ class BillingCustomPermissionSeeder extends Seeder
 {
     /** @var array<string, string[]> permission name => web-guard roles */
     protected array $matrix = [
-        'view_invoice_pdf' => ['super_admin', 'billing_clerk', 'billing_clerk', 'finance_officer', 'receptionist', 'admissions_staff'],
-        'print_invoice' => ['super_admin', 'billing_clerk', 'billing_clerk', 'finance_officer', 'receptionist', 'admissions_staff'],
-        'download_invoice' => ['super_admin', 'billing_clerk', 'billing_clerk', 'finance_officer'],
-        'print_receipt' => ['super_admin', 'billing_clerk', 'billing_clerk', 'finance_officer', 'receptionist', 'admissions_staff'],
-        'download_receipt' => ['super_admin', 'billing_clerk', 'billing_clerk', 'finance_officer'],
+        'view_invoice_pdf' => ['super_admin', 'billing_clerk', 'receptionist', 'admissions_staff'],
+        'print_invoice' => ['super_admin', 'billing_clerk', 'receptionist', 'admissions_staff'],
+        'download_invoice' => ['super_admin', 'billing_clerk'],
+        'print_receipt' => ['super_admin', 'billing_clerk', 'receptionist', 'admissions_staff'],
+        'download_receipt' => ['super_admin', 'billing_clerk'],
     ];
 
     public function run(): void
