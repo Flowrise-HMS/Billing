@@ -8,6 +8,7 @@ use Modules\Billing\Listeners\FinalizeEncounterBilling;
 use Modules\Billing\Listeners\SendUnpaidBillingNotifications;
 use Modules\Billing\Listeners\SyncRequestItemCreatedToInvoice;
 use Modules\Billing\Listeners\SyncRequestItemUpdatedToInvoice;
+use Modules\Clinical\Events\EncounterCancelled;
 use Modules\Clinical\Events\EncounterFinished;
 use Modules\Clinical\Events\RequestItemCreated;
 use Modules\Clinical\Events\RequestItemUpdated;
@@ -25,6 +26,9 @@ class EventServiceProvider extends ServiceProvider
             SyncRequestItemUpdatedToInvoice::class,
         ],
         EncounterFinished::class => [
+            FinalizeEncounterBilling::class,
+        ],
+        EncounterCancelled::class => [
             FinalizeEncounterBilling::class,
         ],
         UnpaidBillingNoticeRequired::class => [
