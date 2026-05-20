@@ -8,6 +8,7 @@ use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Models\Invoice;
+use Modules\Core\Classes\Services\BranchService;
 use Modules\Core\Models\Branch;
 
 class CreateInvoice extends CreateRecord
@@ -16,7 +17,7 @@ class CreateInvoice extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $branchId = auth()->user()?->branch_id ?? Context::get('current_branch_id');
+        $branchId = app(BranchService::class)->getDefaultBranchId();
         if (! $branchId) {
             abort(403, __('No branch context.'));
         }
