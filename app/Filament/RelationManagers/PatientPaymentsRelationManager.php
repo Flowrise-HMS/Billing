@@ -1,0 +1,27 @@
+<?php
+
+namespace Modules\Billing\Filament\RelationManagers;
+
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\PaymentResource;
+
+class PatientPaymentsRelationManager extends RelationManager
+{
+    protected static string $relationship = 'payments';
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('Payments');
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('id')
+            ->columns(PaymentResource::getPaymentTableColumns())
+            ->recordActions(PaymentResource::getPaymentRecordActions())
+            ->defaultSort('received_at', 'desc');
+    }
+}

@@ -8,6 +8,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -31,29 +32,52 @@ class PaymentResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
-                TextColumn::make('id')->label('ID')->limit(8)->tooltip(fn (Payment $r) => $r->id),
-                TextColumn::make('method')->badge(),
-                TextColumn::make('gateway'),
-                TextColumn::make('amount')->numeric(decimalPlaces: 2),
-                TextColumn::make('currency'),
-                TextColumn::make('received_at')->dateTime()->sortable(),
+            ->columns(static::getPaymentTableColumns())
+            ->filters([
+                SelectFilter::make('branch_id')
+                    ->label(__('Branch'))
+                    ->relationship('branch','name')
+                    ->preload()
+                    ->searchable(),
+                SelectFilter::make('patient_id')
+                    ->label(__('Patient'))
+                    ->relationship('patient','mrn')
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record?->display_name)
+                    ->preload()
+                    ->searchable(),
             ])
-            ->recordActions([
-                Action::make('receipt')
-                    ->label(__('Receipt PDF'))
-                    ->icon(Heroicon::OutlinedDocumentArrowDown)
-                    ->url(fn (Payment $record) => route('billing.payments.receipt', $record))
-                    ->openUrlInNewTab()
-                    ->visible(fn () => Auth::user()?->can('print_receipt')),
-                Action::make('receipt_download')
-                    ->label(__('Download receipt'))
-                    ->icon(Heroicon::OutlinedArrowDownTray)
-                    ->url(fn (Payment $record) => route('billing.payments.receipt', ['payment' => $record, 'download' => 1]))
-                    ->openUrlInNewTab()
-                    ->visible(fn () => Auth::user()?->can('download_receipt')),
-            ])
+            ->recordActions(static::getPaymentRecordActions())
             ->defaultSort('received_at', 'desc');
+    }
+
+    public static function getPaymentTableColumns(): array
+    {
+        return [
+            TextColumn::make('id')->label('ID')->limit(8)->tooltip(fn (Payment $r) => $r->id),
+            TextColumn::make('method')->badge(),
+            TextColumn::make('gateway'),
+            TextColumn::make('amount')->numeric(decimalPlaces: 2),
+            TextColumn::make('currency'),
+            TextColumn::make('received_at')->dateTime()->sortable(),
+        ];
+    }
+
+    public static function getPaymentRecordActions(): array
+    {
+        return [
+            Action::make('receipt')
+                ->label(__('Receipt PDF'))
+                ->icon(Heroicon::OutlinedDocumentArrowDown)
+                ->url(fn (Payment $record) => route('billing.payments.receipt', $record))
+                ->openUrlInNewTab()
+                ->visible(fn () => Auth::user()?->can('print_receipt')),
+            Action::make('receipt_download')
+                ->label(__('Download receipt'))
+                ->icon(Heroicon::OutlinedArrowDownTray)
+                ->url(fn (Payment $record) => route('billing.payments.receipt', ['payment' => $record, 'download' => 1]))
+                ->openUrlInNewTab()
+                ->visible(fn () => Auth::user()?->can('download_receipt')),
+        ];
     }
 
     public static function getPages(): array

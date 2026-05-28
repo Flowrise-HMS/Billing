@@ -3,6 +3,7 @@
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\BranchPaymentGatewayConfigs;
 
 use BackedEnum;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -20,6 +21,7 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\BranchPaymentGatewayConf
 use Modules\Billing\Filament\Clusters\Billing\Resources\BranchPaymentGatewayConfigs\Pages\EditBranchPaymentGatewayConfig;
 use Modules\Billing\Filament\Clusters\Billing\Resources\BranchPaymentGatewayConfigs\Pages\ListBranchPaymentGatewayConfigs;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
+use Modules\Core\Classes\Services\BranchService;
 
 class BranchPaymentGatewayConfigResource extends Resource
 {
@@ -35,11 +37,13 @@ class BranchPaymentGatewayConfigResource extends Resource
     {
         return $schema->components([
             Section::make(__('Gateway'))
+                ->columnSpanFull()
                 ->schema([
                     Select::make('branch_id')
                         ->relationship('branch', 'name')
                         ->required()
-                        ->searchable(),
+                        ->searchable()
+                        ->default(app(BranchService::class)->getDefaultBranchId()),
                     Select::make('driver')
                         ->options([
                             'paystack' => 'Paystack',
@@ -69,6 +73,7 @@ class BranchPaymentGatewayConfigResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->defaultSort('driver');
     }

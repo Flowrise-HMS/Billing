@@ -7,6 +7,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\InvoiceStatus;
@@ -17,12 +18,26 @@ class InvoicesTable
     {
         return $table
             ->columns([
-                TextColumn::make('invoice_number')->searchable()->sortable(),
+                TextColumn::make('#')->rowIndex(),
+                TextColumn::make('invoice_number')->copyable()->searchable()->sortable(),
                 TextColumn::make('patient.mrn')->label('MRN')->searchable(),
                 TextColumn::make('status')->badge()->sortable(),
                 TextColumn::make('total')->numeric(decimalPlaces: 2)->sortable(),
                 TextColumn::make('amount_paid')->numeric(decimalPlaces: 2),
                 TextColumn::make('issued_at')->dateTime()->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('branch_id')
+                    ->label(__('Branch'))
+                    ->relationship('branch','name')
+                    ->preload()
+                    ->searchable(),
+                SelectFilter::make('patient_id')
+                    ->label(__('Patient'))
+                    ->relationship('patient','mrn')
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record?->display_name)
+                    ->preload()
+                    ->searchable(),
             ])
             ->recordActions([
                 ViewAction::make(),

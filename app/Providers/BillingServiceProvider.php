@@ -51,6 +51,10 @@ class BillingServiceProvider extends ModuleServiceProvider
             return $patient->hasMany(Invoice::class);
         });
 
+        Patient::resolveRelationUsing('payments', function (Patient $patient) {
+            return $patient->hasMany(Payment::class);
+        });
+
         Encounter::resolveRelationUsing('invoices', function (Encounter $encounter) {
             return $encounter->hasMany(Invoice::class);
         });
