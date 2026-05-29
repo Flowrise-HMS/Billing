@@ -1,81 +1,8 @@
 <x-filament-panels::page>
     <div class="grid gap-6 md:grid-cols-5">
-        {{-- Left panel: Search + Queue --}}
-        <div class="md:col-span-2 space-y-4">
-            <x-filament::input.wrapper>
-                <x-filament::input
-                    type="search"
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="{{ __('Search MRN, name, phone, invoice #, or guest phone...') }}"
-                />
-            </x-filament::input.wrapper>
-
-            <div class="flex gap-2 flex-wrap">
-                <x-filament::badge
-                    tag="button"
-                    wire:click="$set('statusFilter', 'unpaid')"
-                    :color="$statusFilter === 'unpaid' ? 'danger' : 'gray'"
-                >
-                    {{ __('Unpaid') }}
-                </x-filament::badge>
-                <x-filament::badge
-                    tag="button"
-                    wire:click="$set('statusFilter', 'all')"
-                    :color="$statusFilter === 'all' ? 'primary' : 'gray'"
-                >
-                    {{ __('All') }}
-                </x-filament::badge>
-                <x-filament::badge
-                    tag="button"
-                    wire:click="$set('sourceFilter', 'pharmacy')"
-                    :color="$sourceFilter === 'pharmacy' ? 'warning' : 'gray'"
-                >
-                    {{ __('Pharmacy') }}
-                </x-filament::badge>
-                <x-filament::badge
-                    tag="button"
-                    wire:click="$set('sourceFilter', 'encounter')"
-                    :color="$sourceFilter === 'encounter' ? 'info' : 'gray'"
-                >
-                    {{ __('Encounter') }}
-                </x-filament::badge>
-                @if ($sourceFilter)
-                    <x-filament::badge
-                        tag="button"
-                        wire:click="$set('sourceFilter', null)"
-                        color="gray"
-                        class="cursor-pointer"
-                    >
-                        &times; {{ __('Clear filter') }}
-                    </x-filament::badge>
-                @endif
-            </div>
-
-            <div class="space-y-2">
-                @forelse ($invoices as $inv)
-                    <div
-                        wire:click="selectInvoice('{{ $inv['id'] }}')"
-                        class="p-3 rounded-lg border cursor-pointer transition-colors
-                            {{ $selectedInvoiceId === $inv['id'] ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300' }}"
-                    >
-                        <div class="flex items-center justify-between">
-                            <span class="font-medium">{{ $inv['invoice_number'] }}</span>
-                            <x-filament::badge>{{ $inv['status_label'] }}</x-filament::badge>
-                        </div>
-                        <div class="text-sm text-gray-500 mt-1">{{ $inv['patient_name'] }}</div>
-                        <div class="flex items-center justify-between mt-1 text-sm">
-                            <span class="text-gray-500">{{ $inv['issued_at'] }}</span>
-                            <span class="font-semibold {{ (float) $inv['balance_due'] > 0 ? 'text-danger-600' : 'text-success-600' }}">
-                                {{ __('Balance') }}: {{ number_format((float) $inv['balance_due'], 2) }}
-                            </span>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-8 text-gray-500">
-                        {{ __('No outstanding invoices found.') }}
-                    </div>
-                @endforelse
-            </div>
+        {{-- Left panel: Table-based invoice queue --}}
+        <div class="md:col-span-2">
+            {{ $this->table }}
         </div>
 
         {{-- Right panel: Selected invoice details --}}
@@ -155,7 +82,16 @@
                         </table>
                     </div>
 
-                    <div class="mt-4 flex justify-end">
+                    <div class="mt-4 flex justify-end gap-3">
+                        <x-filament::button
+                            tag="a"
+                            href="{{ route('billing.invoices.pdf', $selectedInvoice['id']) }}"
+                            target="_blank"
+                            color="gray"
+                            icon="heroicon-m-printer"
+                        >
+                            {{ __('Print') }}
+                        </x-filament::button>
                         <x-filament::button
                             wire:click="mountAction('collectPayment')"
                             color="success"

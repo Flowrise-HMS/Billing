@@ -3,13 +3,17 @@
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables;
 
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
@@ -23,8 +27,8 @@ class InvoicesTable
             ->columns([
                 TextColumn::make('#')->rowIndex(),
                 TextColumn::make('invoice_number')->copyable()->searchable()->sortable(),
-                TextColumn::make('patient.mrn')->label('MRN')->searchable(),
-                TextColumn::make('patient.display_name')->label(__('Patient'))->searchable(),
+                TextColumn::make('patient.mrn')->label('Patient MRN')->searchable(),
+                TextColumn::make('patient.display_name')->label(__('Patient'))->searchable(false),
                 TextColumn::make('status')->badge()->sortable(),
                 TextColumn::make('total')->numeric(decimalPlaces: 2)->sortable(),
                 TextColumn::make('amount_paid')->numeric(decimalPlaces: 2)->sortable(),
@@ -37,6 +41,44 @@ class InvoicesTable
                 TextColumn::make('issued_at')->dateTime()->sortable(),
             ])
             ->filters([
+                Filter::make('issued_at')
+                    ->label(__('Issue date'))
+                    ->columns(2)
+                    ->columnSpan(2)
+                    ->schema([
+                        DateTimePicker::make('issued_from')
+                            ->label(__('From'))
+                            ->placeholder(__('From date'))
+                            ->native(false),
+                        DateTimePicker::make('issued_until')
+                            ->label(__('Until'))
+                            ->placeholder(__('To date'))
+                            ->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['issued_from'], fn (Builder $q, $date): Builder => $q->where('issued_at', '>=', $date))
+                            ->when($data['issued_until'], fn (Builder $q, $date): Builder => $q->where('issued_at', '<=', $date));
+                    }),
+                Filter::make('created_at')
+                    ->label(__('Created date'))
+                    ->columns(2)
+                    ->columnSpan(2)
+                    ->schema([
+                        DateTimePicker::make('created_from')
+                            ->label(__('From'))
+                            ->placeholder(__('From date'))
+                            ->native(false),
+                        DateTimePicker::make('created_until')
+                            ->label(__('Until'))
+                            ->placeholder(__('To date'))
+                            ->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['created_from'], fn (Builder $q, $date): Builder => $q->where('created_at', '>=', $date))
+                            ->when($data['created_until'], fn (Builder $q, $date): Builder => $q->where('created_at', '<=', $date));
+                    }),
                 SelectFilter::make('status')
                     ->label(__('Status'))
                     ->options(InvoiceStatus::class)
@@ -57,7 +99,7 @@ class InvoicesTable
                 RecordInvoicePaymentAction::make()
                     ->visible(fn ($record) => !empty($record) && ! in_array($record?->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
                         && bccomp($record?->balanceDue(), '0', 2) > 0),
-                ViewAction::make(),
+
                 Action::make('invoice_pdf')
                     ->label(__('Invoice PDF'))
                     ->icon(Heroicon::OutlinedDocumentArrowDown)
@@ -72,6 +114,8 @@ class InvoicesTable
                     ->visible(fn () => Auth::user()?->can('download_invoice')),
                 EditAction::make()
                     ->visible(fn ($record) => $record->status === InvoiceStatus::Draft),
+                ViewAction::make(),
+                DeleteAction::make(),
             ])
             ->defaultSort('issued_at', 'asc');
     }

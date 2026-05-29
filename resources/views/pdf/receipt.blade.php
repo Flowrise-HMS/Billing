@@ -33,7 +33,7 @@
             ({{ __('MRN') }}: {{ $payment->patient->mrn }})
         @endif
         <br>
-        <strong>{{ __('Branch') }}:</strong> {{ $payment->branch?->name ?? __('N/A') }}
+        <strong>{{ __('Branch') }}:</strong> {{ $payment?->branch?->name ?? __('N/A') }}
     </div>
 
     <div class="section">

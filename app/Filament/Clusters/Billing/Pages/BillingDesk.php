@@ -4,64 +4,45 @@ namespace Modules\Billing\Filament\Clusters\Billing\Pages;
 
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
 use Modules\Billing\Models\Invoice;
+use Modules\Core\Classes\Services\BranchService;
 
-class BillingDesk extends Page
+class BillingDesk extends Page implements HasTable
 {
-    use HasPageShield;
+    use HasPageShield, InteractsWithTable;
 
-    protected static ?string $cluster = BillingCluster::class;
+    // protected static ?string $cluster = Billing  Cluster::class;
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = -3;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
     protected string $view = 'billing::filament.clusters.billing.pages.billing-desk';
 
-    public string $search = '';
-
-    public string $statusFilter = 'unpaid';
-
-    public ?string $sourceFilter = null;
-
     public ?string $selectedInvoiceId = null;
-
-    public array $invoices = [];
 
     public ?array $selectedInvoice = null;
 
-    public function mount(): void
+    public function selectInvoice(string $recordKey): void
     {
-        $this->loadInvoices();
-    }
-
-    public function updatedSearch(): void
-    {
-        $this->loadInvoices();
-    }
-
-    public function updatedStatusFilter(): void
-    {
-        $this->loadInvoices();
-    }
-
-    public function updatedSourceFilter(): void
-    {
-        $this->loadInvoices();
-    }
-
-    public function selectInvoice(string $invoiceId): void
-    {
-        $this->selectedInvoiceId = $invoiceId;
+        $this->selectedInvoiceId = $recordKey;
         $this->loadSelectedInvoice();
     }
 
@@ -73,7 +54,6 @@ class BillingDesk extends Page
         }
 
         $invoice = Invoice::with(['lines' => fn ($q) => $q->orderBy('id'), 'patient'])
-            ->withoutGlobalScopes()
             ->find($this->selectedInvoiceId);
 
         if (! $invoice) {
@@ -100,68 +80,125 @@ class BillingDesk extends Page
         ];
     }
 
-    public function loadInvoices(): void
+
+
+    public function table(Table $table): Table
     {
-        $query = Invoice::query()
-            ->withoutGlobalScopes()
-            ->with('patient')
-            ->whereIn('status', [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid]);
-
-        $branchId = Context::get('current_branch_id', Auth::user()?->branch_id);
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
-
-        if ($this->sourceFilter === 'pharmacy') {
-            $query->where('metadata->source', 'pharmacy_pos');
-        } elseif ($this->sourceFilter === 'encounter') {
-            $query->whereNotNull('encounter_id');
-        }
-
-        if ($this->statusFilter === 'unpaid') {
-            $query->whereRaw('CAST(total AS DECIMAL(14,2)) > CAST(amount_paid AS DECIMAL(14,2))');
-        }
-
-        if ($this->search) {
-            $search = $this->search;
-            $query->where(function (Builder $q) use ($search) {
-                $q->where('invoice_number', 'like', "%{$search}%")
-                    ->orWhere('guest_name', 'like', "%{$search}%")
-                    ->orWhere('guest_phone', 'like', "%{$search}%")
-                    ->orWhereHas('patient', function (Builder $pq) use ($search) {
-                        $pq->where('mrn', 'like', "%{$search}%")
-                            ->orWhere('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        $this->invoices = $query->orderBy('issued_at', 'asc')
-            ->limit(50)
-            ->get()
-            ->map(fn (Invoice $inv) => [
-                'id' => $inv->id,
-                'invoice_number' => $inv->invoice_number,
-                'patient_name' => $inv->patient?->display_name ?? $inv->guest_name ?? __('Walk-in'),
-                'status' => $inv->status->value,
-                'status_label' => $inv->status->getLabel(),
-                'total' => $inv->total,
-                'balance_due' => $inv->balanceDue(),
-                'issued_at' => $inv->issued_at?->format('Y-m-d H:i'),
-            ])
-            ->all();
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            RecordInvoicePaymentAction::make()
-                ->arguments(fn (): array => ['invoice_id' => $this->selectedInvoiceId ?? ''])
+        return InvoicesTable::configure($table)
+            ->query(fn (): Builder => Invoice::with('patient')
+                ->when($branchId = app(BranchService::class)->getDefaultBranchId(), fn (Builder $q) => $q->where('branch_id', $branchId))
+            )
+            ->headerActions([
+                RecordInvoicePaymentAction::make()
+                ->mountUsing(function (Action $action): void {
+                    $action->arguments(['invoice_id' => $this->selectedInvoiceId ?? '']);
+                })
                 ->visible(fn (): bool => $this->selectedInvoiceId !== null)
                 ->label(__('Collect payment')),
-        ];
+            Action::make('invoice_pdf')
+                    ->label(__('Print'))
+                    ->mountUsing(function (Action $action): void {
+                        $action->arguments(['invoice_id' => $this->selectedInvoiceId ?? '']);
+                    })
+                    ->icon(Heroicon::OutlinedDocumentArrowDown)
+                    ->url(fn ($record) => route('billing.invoices.pdf', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn () => $this->selectedInvoiceId !== null && (Auth::user()?->can('view_invoice_pdf') || Auth::user()?->can('print_invoice'))),
+            ])
+            ->recordAction('selectInvoice')
+            ->recordActions([
+                Action::make('invoice_pdf')
+                    ->label(__('Print'))
+                    ->icon(Heroicon::OutlinedDocumentArrowDown)
+                    ->url(fn ($record) => route('billing.invoices.pdf', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn () => (Auth::user()?->can('view_invoice_pdf') || Auth::user()?->can('print_invoice'))),
+                RecordInvoicePaymentAction::make()
+                    ->mountUsing(function ($action, $record): void {
+                        $action->arguments(['invoice_id' => $record?->id]);
+                    })
+                    ->visible(fn ($record): bool => ! in_array($record?->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
+                        && bccomp($record?->balanceDue(), '0', 2) > 0),
+            ])
+            ->filters([
+                Filter::make('patient')
+                    ->label(__('Patient'))
+                    ->columns(1)
+                    ->columnSpanFull()
+                    ->schema([
+                        TextInput::make('search')
+                            ->label(__('Search patient'))
+                            ->placeholder(__('Name, MRN, phone or email...'))
+                            ->live(onBlur: true),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (blank($data['search'] ?? null)) {
+                            return $query;
+                        }
+                        $search = $data['search'];
+                        return $query->whereHas('patient', fn (Builder $q): Builder => $q
+                            ->where('mrn', 'like', "%{$search}%")
+                            ->orWhere('first_name', 'like', "%{$search}%")
+                            ->orWhere('middle_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                        );
+                    }),
+                Filter::make('created_at')
+                    ->label(__('Created date'))
+                    ->columns(2)
+                    ->columnSpan(2)
+                    ->schema([
+                        DateTimePicker::make('created_from')
+                            ->label(__('From'))
+                            ->placeholder(__('From date'))
+                            ->native(true),
+                        DateTimePicker::make('created_until')
+                            ->label(__('Until'))
+                            ->placeholder(__('To date'))
+                            ->native(true),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['created_from'], fn (Builder $q, $date): Builder => $q->where('created_at', '>=', $date))
+                            ->when($data['created_until'], fn (Builder $q, $date): Builder => $q->where('created_at', '<=', $date));
+                    }),
+                SelectFilter::make('payment_status')
+                    ->label(__('Payment'))
+                    ->options([
+                        InvoiceStatus::Draft->value => InvoiceStatus::Draft->getLabel(),
+                        InvoiceStatus::Issued->value => InvoiceStatus::Issued->getLabel(),
+                        InvoiceStatus::PartiallyPaid->value => InvoiceStatus::PartiallyPaid->getLabel(),
+                        InvoiceStatus::Paid->value => InvoiceStatus::Paid->getLabel(),
+                        InvoiceStatus::Void->value => InvoiceStatus::Void->getLabel(),
+                        'all' => __('All'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (($data['value'] ?? null) === 'unpaid') {
+                            $query->whereRaw('CAST(total AS DECIMAL(14,2)) > CAST(amount_paid AS DECIMAL(14,2))');
+                        }
+                    }),
+                SelectFilter::make('source')
+                    ->label(__('Source'))
+                    ->options([
+                        'pharmacy' => __('Pharmacy'),
+                        'encounter' => __('Encounter'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (($data['value'] ?? null) === 'pharmacy') {
+                            $query->where('metadata->source', 'pharmacy_pos');
+                        } elseif (($data['value'] ?? null) === 'encounter') {
+                            $query->whereNotNull('encounter_id');
+                        }
+                    }),
+            ], layout: FiltersLayout::AboveContent)
+            ->defaultSort('issued_at', 'asc')
+            ->paginated([10, 25, 50,100])
+            ->searchable();
     }
+
+
 
     public static function getNavigationLabel(): string
     {

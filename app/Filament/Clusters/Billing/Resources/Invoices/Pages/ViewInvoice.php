@@ -38,7 +38,7 @@ class ViewInvoice extends ViewRecord
                     $this->redirect(static::getUrl(['record' => $this->record]));
                 }),
             RecordInvoicePaymentAction::make()
-                ->arguments(fn () => ['invoice_id' => $this->record->id])
+                ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $this->record->id]))
                 ->visible(fn () => ! in_array($this->record->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
                     && bccomp($this->record->balanceDue(), '0', 2) > 0),
         ];
