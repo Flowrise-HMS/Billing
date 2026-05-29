@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Models\Invoice;
+use Modules\Patient\Classes\Services\PatientSearchService;
 
 class InvoicesTable
 {
@@ -27,8 +28,7 @@ class InvoicesTable
             ->columns([
                 TextColumn::make('#')->rowIndex(),
                 TextColumn::make('invoice_number')->copyable()->searchable()->sortable(),
-                TextColumn::make('patient.mrn')->label('Patient MRN')->searchable(),
-                TextColumn::make('patient.display_name')->label(__('Patient'))->searchable(false),
+                TextColumn::make('patient.display_name')->label(__('Patient')),
                 TextColumn::make('status')->badge()->sortable(),
                 TextColumn::make('total')->numeric(decimalPlaces: 2)->sortable(),
                 TextColumn::make('amount_paid')->numeric(decimalPlaces: 2)->sortable(),

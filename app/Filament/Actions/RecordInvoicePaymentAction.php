@@ -38,6 +38,7 @@ class RecordInvoicePaymentAction
                     ->findOrFail($arguments['invoice_id'] ?? abort(500));
 
                 $currency = $invoice->currency ?? 'GHS';
+                $preSelectedLineId = $arguments['line_id'] ?? null;
 
                 return [
                     ToggleButtons::make('payment_mode')
@@ -47,7 +48,7 @@ class RecordInvoicePaymentAction
                             'amount' => __('Pay amount'),
                             'selected' => __('Pay selected items'),
                         ])
-                        ->default('full')
+                        ->default($preSelectedLineId ? 'selected' : 'full')
                         ->inline()
                         ->live(),
 
@@ -99,18 +100,21 @@ class RecordInvoicePaymentAction
                         ->addable(false)
                         ->deletable(false)
                         ->reorderable(false)
-                        ->afterStateHydrated(static function (callable $set) use ($invoice) {
+                        ->afterStateHydrated(static function (callable $set) use ($invoice, $preSelectedLineId) {
                             $items = $invoice->lines
                                 ->filter(fn ($l) => $l->line_status !== InvoiceLineStatus::Void
-                                    && bccomp($l->remainingAmount(), '0', 2) > 0)
-                                ->values()
-                                ->map(fn ($l) => [
-                                    'line_id' => $l->id,
-                                    'description' => sprintf('%s (qty: %s)', $l->description, $l->quantity),
-                                    'balance' => number_format((float) $l->remainingAmount(), 2),
-                                    'amount' => (string) $l->remainingAmount(),
-                                ]);
-                            $set('line_items', $items->toArray());
+                                    && bccomp($l->remainingAmount(), '0', 2) > 0);
+
+                            if ($preSelectedLineId) {
+                                $items = $items->where('id', $preSelectedLineId);
+                            }
+
+                            $set('line_items', $items->values()->map(fn ($l) => [
+                                'line_id' => $l->id,
+                                'description' => sprintf('%s (qty: %s)', $l->description, $l->quantity),
+                                'balance' => number_format((float) $l->remainingAmount(), 2),
+                                'amount' => (string) $l->remainingAmount(),
+                            ])->toArray());
                         }),
 
                     Grid::make(2)->schema([
@@ -147,8 +151,8 @@ class RecordInvoicePaymentAction
                 $invoice = $record ?? Invoice::with(['lines' => fn ($q) => $q->orderBy('id')])
                     ->findOrFail($invoiceId);
 
-                if (in_array($invoice->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)) {
-                    Notification::make()->danger()->title(__('Cannot collect payment on draft or void invoices.'))->send();
+                if ($invoice->status === InvoiceStatus::Void) {
+                    Notification::make()->danger()->title(__('Cannot collect payment on void invoices.'))->send();
                     return null;
                 }
 

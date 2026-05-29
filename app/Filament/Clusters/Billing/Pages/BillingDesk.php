@@ -53,7 +53,7 @@ class BillingDesk extends Page implements HasTable
             return;
         }
 
-        $invoice = Invoice::with(['lines' => fn ($q) => $q->orderBy('id'), 'patient'])
+        $invoice = Invoice::with(['lines' => fn ($q) => $q->orderBy('id')->with('paymentAllocations.payment'), 'patient'])
             ->find($this->selectedInvoiceId);
 
         if (! $invoice) {
@@ -75,6 +75,11 @@ class BillingDesk extends Page implements HasTable
             'source' => data_get($invoice->metadata, 'source'),
             'lines' => $invoice->lines
                 ->reject(fn ($l) => $l->line_status === InvoiceLineStatus::Void)
+                ->map(fn ($l) => array_merge($l->toArray(), [
+                    'latest_payment_id' => $l->paymentAllocations
+                        ->sortByDesc(fn ($pa) => $pa->payment?->created_at)
+                        ->first()?->payment_id,
+                ]))
                 ->values()
                 ->toArray(),
         ];
@@ -88,23 +93,6 @@ class BillingDesk extends Page implements HasTable
             ->query(fn (): Builder => Invoice::with('patient')
                 ->when($branchId = app(BranchService::class)->getDefaultBranchId(), fn (Builder $q) => $q->where('branch_id', $branchId))
             )
-            ->headerActions([
-                RecordInvoicePaymentAction::make()
-                ->mountUsing(function (Action $action): void {
-                    $action->arguments(['invoice_id' => $this->selectedInvoiceId ?? '']);
-                })
-                ->visible(fn (): bool => $this->selectedInvoiceId !== null)
-                ->label(__('Collect payment')),
-            Action::make('invoice_pdf')
-                    ->label(__('Print'))
-                    ->mountUsing(function (Action $action): void {
-                        $action->arguments(['invoice_id' => $this->selectedInvoiceId ?? '']);
-                    })
-                    ->icon(Heroicon::OutlinedDocumentArrowDown)
-                    ->url(fn ($record) => route('billing.invoices.pdf', $record))
-                    ->openUrlInNewTab()
-                    ->visible(fn () => $this->selectedInvoiceId !== null && (Auth::user()?->can('view_invoice_pdf') || Auth::user()?->can('print_invoice'))),
-            ])
             ->recordAction('selectInvoice')
             ->recordActions([
                 Action::make('invoice_pdf')
@@ -117,7 +105,7 @@ class BillingDesk extends Page implements HasTable
                     ->mountUsing(function ($action, $record): void {
                         $action->arguments(['invoice_id' => $record?->id]);
                     })
-                    ->visible(fn ($record): bool => ! in_array($record?->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
+                    ->visible(fn ($record): bool => ! in_array($record?->status, [InvoiceStatus::Void], true)
                         && bccomp($record?->balanceDue(), '0', 2) > 0),
             ])
             ->filters([
@@ -199,6 +187,16 @@ class BillingDesk extends Page implements HasTable
     }
 
 
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            RecordInvoicePaymentAction::make()
+                ->visible(fn (): bool => $this->selectedInvoice !== null
+                    && ! in_array($this->selectedInvoice['status'], [InvoiceStatus::Void->value], true)
+                    && (float) $this->selectedInvoice['balance_due'] > 0),
+        ];
+    }
 
     public static function getNavigationLabel(): string
     {

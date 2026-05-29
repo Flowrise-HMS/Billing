@@ -20,7 +20,7 @@ class PaymentReceiptController extends BillingController
             abort_unless($user?->can('print_receipt'), 403);
         }
 
-        $pdf = $receipts->render($payment);
+        $pdf = $receipts->render($payment, $request->query('line_id'));
         $disposition = $download ? 'attachment' : 'inline';
 
         return response($pdf, 200, [
