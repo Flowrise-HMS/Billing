@@ -14,7 +14,6 @@ use Modules\Billing\Policies\PaymentPolicy;
 use Modules\Billing\Services\PatientFinancialHoldService;
 use Modules\Clinical\Models\Encounter;
 use Modules\Core\Contracts\PatientFinancialHoldChecker;
-use Modules\Patient\Models\Patient;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class BillingServiceProvider extends ModuleServiceProvider
@@ -46,14 +45,6 @@ class BillingServiceProvider extends ModuleServiceProvider
         Gate::policy(BranchPaymentGatewayConfig::class, BranchPaymentGatewayConfigPolicy::class);
 
         InvoiceLine::observe(InvoiceLineObserver::class);
-
-        Patient::resolveRelationUsing('invoices', function (Patient $patient) {
-            return $patient->hasMany(Invoice::class);
-        });
-
-        Patient::resolveRelationUsing('payments', function (Patient $patient) {
-            return $patient->hasMany(Payment::class);
-        });
 
         Encounter::resolveRelationUsing('invoices', function (Encounter $encounter) {
             return $encounter->hasMany(Invoice::class);

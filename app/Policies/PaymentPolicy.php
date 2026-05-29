@@ -23,6 +23,11 @@ class PaymentPolicy
         return $user->can('ViewAny Payment');
     }
 
+    public function create(User $user): bool
+    {
+        return $user->can('Create Payment');
+    }
+
     public function view(User $user, Payment $payment): bool
     {
         if (! $user->can('View Payment')) {

@@ -5,6 +5,8 @@ namespace Modules\Billing\Filament\Clusters\Billing\Widgets;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
@@ -19,10 +21,18 @@ class FinancialStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $todayRevenue = Payment::whereDate('received_at', today())->sum('amount');
-        $thisWeekRevenue = Payment::where('received_at', '>=', now()->startOfWeek())->sum('amount');
+        $branchId = Context::get('current_branch_id', Auth::user()?->branch_id);
+
+        $todayRevenue = Payment::when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->whereDate('received_at', today())
+            ->sum('amount');
+
+        $thisWeekRevenue = Payment::when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->where('received_at', '>=', now()->startOfWeek())
+            ->sum('amount');
 
         $unpaidBalance = Invoice::query()
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->where('status', '!=', InvoiceStatus::Void)
             ->sum(DB::raw('total - amount_paid'));
 
@@ -37,9 +47,10 @@ class FinancialStatsWidget extends BaseWidget
                 ->description('Payments received this week')
                 ->descriptionIcon('heroicon-m-chart-bar'),
             Stat::make('Total Unpaid', $currency.' '.number_format($unpaidBalance, 2))
-                ->description('Outstanding invoice balances')
+                ->description('Outstanding invoice balances — click to view')
                 ->descriptionIcon('heroicon-m-exclamation-circle')
-                ->color('danger'),
+                ->color('danger')
+                ->url(\Modules\Billing\Filament\Clusters\Billing\Pages\BillingDesk::getUrl()),
         ];
     }
 }
