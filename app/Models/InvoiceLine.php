@@ -36,6 +36,8 @@ class InvoiceLine extends Model
         'claim_line_id',
         'payer_snapshot',
         'metadata',
+        'unit_id',
+        'unit_label_snapshot',
     ];
 
     protected $casts = [
@@ -90,5 +92,10 @@ class InvoiceLine extends Model
     public function remainingAmount(): string
     {
         return bcsub((string) $this->line_total, (string) $this->amount_paid, 2);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Core\Models\Unit::class);
     }
 }
