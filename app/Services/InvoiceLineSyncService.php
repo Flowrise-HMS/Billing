@@ -55,6 +55,8 @@ class InvoiceLineSyncService
                 'line_total' => $lineTotal,
                 'line_status' => $status,
                 'patient_responsibility_amount' => $status === InvoiceLineStatus::Void ? 0 : $lineTotal,
+                'unit_id' => $item->billing_unit_id,
+                'unit_label_snapshot' => $item->billingUnit?->label,
             ];
 
             if ($status !== InvoiceLineStatus::Void && $item->patient_id) {
