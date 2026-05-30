@@ -5,6 +5,7 @@ namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\RelationM
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -15,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
+use Modules\Core\Models\Unit;
 
 class InvoiceLinesRelationManager extends RelationManager
 {
@@ -45,7 +47,21 @@ class InvoiceLinesRelationManager extends RelationManager
                             ->numeric()
                             ->minValue(1)
                             ->default(1)
-                            ->required(),
+                            ->required()
+                            ->suffix(fn ($record) => $record?->unit_label_snapshot ?? ''),
+                        Select::make('unit_id')
+                            ->label('Unit')
+                            ->relationship('unit', 'label')
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, $state, $record) {
+                                if ($state && $unit = Unit::find($state)) {
+                                    $set('unit_label_snapshot', $unit->label);
+                                }
+                            }),
+                        Hidden::make('unit_label_snapshot'),
                         TextInput::make('unit_price')
                             ->label(__('Unit price'))
                             ->numeric()
@@ -71,7 +87,8 @@ class InvoiceLinesRelationManager extends RelationManager
             ->recordTitleAttribute('description')
             ->columns([
                 TextColumn::make('description')->searchable(),
-                TextColumn::make('quantity'),
+                TextColumn::make('quantity')
+                    ->formatStateUsing(fn ($record): string => $record->quantity . ' ' . ($record->unit_label_snapshot ?? '')),
                 TextColumn::make('unit_price')->numeric(decimalPlaces: 2),
                 TextColumn::make('line_total')->numeric(decimalPlaces: 2),
                 TextColumn::make('line_status')->badge(),
