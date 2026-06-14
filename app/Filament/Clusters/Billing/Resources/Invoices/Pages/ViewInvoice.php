@@ -17,30 +17,31 @@ class ViewInvoice extends ViewRecord
 
     protected function getHeaderActions(): array
     {
+        $record = $this->getRecord();
         return [
             Action::make('editDraft')
                 ->label(__('Edit lines'))
                 ->icon(Heroicon::OutlinedPencilSquare)
-                ->visible(fn () => $this->record->status === InvoiceStatus::Draft)
-                ->url(fn () => InvoiceResource::getUrl('edit', ['record' => $this->record])),
+                ->visible(fn () => $record?->status === InvoiceStatus::Draft)
+                ->url(fn () => InvoiceResource::getUrl('edit', ['record' => $record])),
             Action::make('issue')
                 ->label(__('Issue invoice'))
                 ->icon(Heroicon::OutlinedPaperAirplane)
-                ->visible(fn () => $this->record->status === InvoiceStatus::Draft)
+                ->visible(fn () => $record?->status === InvoiceStatus::Draft)
                 ->requiresConfirmation()
-                ->action(function (InvoiceIssuanceService $issuance) {
-                    Context::add('current_branch_id', $this->record->branch_id);
+                ->action(function (InvoiceIssuanceService $issuance) use($record) {
+                    Context::add('current_branch_id', $record?->branch_id);
                     try {
-                        $issuance->issue($this->record->fresh());
+                        $issuance->issue($record?->fresh());
                     } finally {
                         Context::forget('current_branch_id');
                     }
-                    $this->redirect(static::getUrl(['record' => $this->record]));
+                    $this->redirect(static::getUrl(['record' => $record]));
                 }),
             RecordInvoicePaymentAction::make()
-                ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $this->record->id]))
-                ->visible(fn () => ! in_array($this->record->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
-                    && bccomp($this->record->balanceDue(), '0', 2) > 0),
+                ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $record->id]))
+                ->visible(fn () => ! in_array($record->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
+                    && bccomp($record->balanceDue(), '0', 2) > 0),
         ];
     }
 }

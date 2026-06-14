@@ -97,6 +97,9 @@ class InvoicesTable
             ], layout: FiltersLayout::AboveContent)
             ->recordActions([
                 RecordInvoicePaymentAction::make()
+                    ->mountUsing(function ($action, $record): void {
+                        $action->arguments(['invoice_id' => $record?->id]);
+                    })
                     ->visible(fn ($record) => !empty($record) && ! in_array($record?->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
                         && bccomp($record?->balanceDue(), '0', 2) > 0),
 

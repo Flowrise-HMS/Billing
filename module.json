@@ -1,8 +1,8 @@
 {
     "name": "Billing",
     "alias": "billing",
-    "description": "",
-    "keywords": [],
+    "description": "Invoice management, payment processing, payment gateway integration, and revenue reporting.",
+    "keywords": ["flowrise", "hms", "billing", "invoicing", "payments", "revenue"],
     "priority": 0,
     "providers": [
         "Modules\\Billing\\Providers\\BillingServiceProvider"

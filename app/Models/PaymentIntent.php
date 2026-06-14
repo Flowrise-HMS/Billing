@@ -3,6 +3,7 @@
 namespace Modules\Billing\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Billing\Enums\PaymentIntentStatus;
@@ -10,7 +11,7 @@ use Modules\Core\Models\Branch;
 
 class PaymentIntent extends Model
 {
-    use HasUuids;
+    use HasFactory, HasUuids;
 
     protected $keyType = 'string';
 

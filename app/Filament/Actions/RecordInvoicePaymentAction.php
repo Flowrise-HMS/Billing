@@ -12,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Modules\Billing\Enums\InvoiceLineStatus;
@@ -32,10 +33,10 @@ class RecordInvoicePaymentAction
             ->color('success')
             ->modalHeading(__('Collect payment'))
             ->modalWidth('2xl')
-            ->authorize('create', Payment::class)
-            ->schema(function (?Invoice $record = null, array $arguments = []): array {
-                $invoice = $record ?? Invoice::with(['lines' => fn ($q) => $q->orderBy('id')])
-                    ->findOrFail($arguments['invoice_id'] ?? abort(500));
+            ->hidden(fn () => ! Auth::user()?->can('Create Payment'))
+            ->schema(function (?Model $record = null, array $arguments = []): array {
+                $invoice = Invoice::with(['lines' => fn ($q) => $q->orderBy('id')])
+                    ->findOrFail($record?->getKey() ?? $arguments['invoice_id']);
 
                 $currency = $invoice->currency ?? 'GHS';
                 $preSelectedLineId = $arguments['line_id'] ?? null;
@@ -141,14 +142,14 @@ class RecordInvoicePaymentAction
                         ->visible(fn (Get $get) => $get('payment_method') === PaymentMethod::Cash->value),
                 ];
             })
-            ->action(function (array $data, ?Invoice $record = null, array $arguments = [], PaymentRecordingService $payments, InvoiceAllocationBuilder $builder): ?Payment {
-                $invoiceId = $record?->id ?? $arguments['invoice_id'] ?? $data['invoice_id'] ?? null;
+            ->action(function (array $data, array $arguments = [], PaymentRecordingService $payments, InvoiceAllocationBuilder $builder): ?Payment {
+                $invoiceId = $arguments['invoice_id'] ?? $data['invoice_id'] ?? null;
                 if (! $invoiceId) {
                     Notification::make()->danger()->title(__('Invoice not specified.'))->send();
                     return null;
                 }
 
-                $invoice = $record ?? Invoice::with(['lines' => fn ($q) => $q->orderBy('id')])
+                $invoice = Invoice::with(['lines' => fn ($q) => $q->orderBy('id')])
                     ->findOrFail($invoiceId);
 
                 if ($invoice->status === InvoiceStatus::Void) {
