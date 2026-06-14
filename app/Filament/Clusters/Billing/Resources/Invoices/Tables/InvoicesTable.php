@@ -16,7 +16,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\InvoiceStatus;
+use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Models\Invoice;
 use Modules\Patient\Classes\Services\PatientSearchService;
 
@@ -29,7 +31,14 @@ class InvoicesTable
                 TextColumn::make('#')->rowIndex(),
                 TextColumn::make('invoice_number')->copyable()->searchable()->sortable(),
                 TextColumn::make('patient.display_name')->label(__('Patient')),
-                TextColumn::make('status')->badge()->sortable(),
+                TextColumn::make('invoice_type')
+                    ->label(__('Type'))
+                    ->badge()
+                    ->sortable(),
+                TextColumn::make('status')
+                    ->label(__('Status'))
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('total')->numeric(decimalPlaces: 2)->sortable(),
                 TextColumn::make('amount_paid')->numeric(decimalPlaces: 2)->sortable(),
                 TextColumn::make('balance_due')
@@ -79,6 +88,10 @@ class InvoicesTable
                             ->when($data['created_from'], fn (Builder $q, $date): Builder => $q->where('created_at', '>=', $date))
                             ->when($data['created_until'], fn (Builder $q, $date): Builder => $q->where('created_at', '<=', $date));
                     }),
+                SelectFilter::make('invoice_type')
+                    ->label(__('Type'))
+                    ->options(InvoiceType::class)
+                    ->multiple(),
                 SelectFilter::make('status')
                     ->label(__('Status'))
                     ->options(InvoiceStatus::class)
@@ -117,9 +130,9 @@ class InvoicesTable
                     ->visible(fn () => Auth::user()?->can('download_invoice')),
                 EditAction::make()
                     ->visible(fn ($record) => $record->status === InvoiceStatus::Draft),
-                ViewAction::make(),
+                ViewAction::make()->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record])),
                 DeleteAction::make(),
             ])
-            ->defaultSort('issued_at', 'asc');
+            ->defaultSort('created_at', 'desc');
     }
 }

@@ -34,6 +34,7 @@ class InvoiceLinesRelationManager extends RelationManager
         return $schema
             ->components([
                 Section::make(__('Line'))
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('service_id')
                             ->label(__('Service'))

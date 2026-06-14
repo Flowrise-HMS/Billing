@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
 use Modules\Billing\Models\Invoice;
 
 class PatientInvoicesRelationManager extends RelationManager
@@ -29,46 +30,7 @@ class PatientInvoicesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('invoice_number')
-            ->defaultSort('created_at', 'desc')
-            ->columns([
-                TextColumn::make('invoice_number')
-                    ->label(__('Invoice #'))
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('invoice_type')
-                    ->label(__('Type'))
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('status')
-                    ->label(__('Status'))
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('total')
-                    ->label(__('Total'))
-                    ->numeric(decimalPlaces: 2)
-                    ->sortable(),
-                TextColumn::make('amount_paid')
-                    ->label(__('Paid'))
-                    ->numeric(decimalPlaces: 2),
-                TextColumn::make('balance_due')
-                    ->label(__('Balance due'))
-                    ->numeric(decimalPlaces: 2)
-                    ->color(fn (Invoice $record): ?string => bccomp($record->balanceDue(), '0', 2) > 0 ? 'danger' : 'success')
-                    ->getStateUsing(fn (Invoice $record): string => $record->balanceDue()),
-                TextColumn::make('issued_at')
-                    ->label(__('Issued'))
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->recordActions([
-                RecordInvoicePaymentAction::make()
-                    ->arguments(fn (Invoice $record) => ['invoice_id' => $record->id])
-                    ->visible(fn (Invoice $record) => ! in_array($record->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
-                        && bccomp($record->balanceDue(), '0', 2) > 0),
-                ViewAction::make()
-                    ->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record])),
-            ]);
+        return InvoicesTable::configure($table)
+            ->recordTitleAttribute('invoice_number');
     }
 }

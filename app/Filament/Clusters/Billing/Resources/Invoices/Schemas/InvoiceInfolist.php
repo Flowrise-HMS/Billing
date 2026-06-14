@@ -13,6 +13,7 @@ class InvoiceInfolist
         return $schema
             ->components([
                 Section::make(__('Invoice'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('invoice_number'),
                         TextEntry::make('status'),
