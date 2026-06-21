@@ -9,11 +9,16 @@ use Filament\Widgets\WidgetConfiguration;
 use Modules\Billing\Data\BillingReportCriteria;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\AgingBucketsTableWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\AgingDonutChartWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\BranchCollectionsBarChartWidget;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\BranchSummaryTableWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\InsuranceSplitDonutChartWidget;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\PaymentMethodBreakdownTableWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\PaymentMethodDonutChartWidget;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\RecentPaymentsTableWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\RevenueTrendChartWidget;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\TopOutstandingInvoicesTableWidget;
 use Modules\Billing\Services\RevenueReportService;
 use Modules\Core\Models\Branch;
 
@@ -130,6 +135,22 @@ class RevenueReport extends Page
         }
 
         return $widgets;
+    }
+
+    /**
+     * @return array<class-string|int, class-string|WidgetConfiguration>
+     */
+    public function getReportTableWidgets(): array
+    {
+        $payload = ['reportPayload' => $this->report];
+
+        return [
+            BranchSummaryTableWidget::make($payload),
+            PaymentMethodBreakdownTableWidget::make($payload),
+            AgingBucketsTableWidget::make($payload),
+            RecentPaymentsTableWidget::make($payload),
+            TopOutstandingInvoicesTableWidget::make($payload),
+        ];
     }
 
     protected function loadReport(): void
