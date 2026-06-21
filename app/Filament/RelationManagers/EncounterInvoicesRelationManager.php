@@ -9,6 +9,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class EncounterInvoicesRelationManager extends RelationManager
 {
@@ -42,13 +43,13 @@ class EncounterInvoicesRelationManager extends RelationManager
                     ->label(__('Status'))
                     ->badge()
                     ->sortable(),
-                TextColumn::make('total')
+                CurrencyColumn::make('total')
                     ->label(__('Total'))
-                    ->numeric(decimalPlaces: 2)
+                    ->currency(fn ($record) => (string) $record->currency)
                     ->sortable(),
-                TextColumn::make('amount_paid')
+                CurrencyColumn::make('amount_paid')
                     ->label(__('Paid'))
-                    ->numeric(decimalPlaces: 2),
+                    ->currency(fn ($record) => (string) $record->currency),
                 TextColumn::make('issued_at')
                     ->label(__('Issued'))
                     ->dateTime()

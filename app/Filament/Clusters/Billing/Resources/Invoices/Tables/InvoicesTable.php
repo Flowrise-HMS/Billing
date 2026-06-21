@@ -20,6 +20,7 @@ use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Models\Invoice;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 use Modules\Patient\Classes\Services\PatientSearchService;
 
 class InvoicesTable
@@ -39,11 +40,15 @@ class InvoicesTable
                     ->label(__('Status'))
                     ->badge()
                     ->sortable(),
-                TextColumn::make('total')->numeric(decimalPlaces: 2)->sortable(),
-                TextColumn::make('amount_paid')->numeric(decimalPlaces: 2)->sortable(),
-                TextColumn::make('balance_due')
+                CurrencyColumn::make('total')
+                    ->currency(fn (Invoice $record): string => (string) $record->currency)
+                    ->sortable(),
+                CurrencyColumn::make('amount_paid')
+                    ->currency(fn (Invoice $record): string => (string) $record->currency)
+                    ->sortable(),
+                CurrencyColumn::make('balance_due')
                     ->label(__('Balance due'))
-                    ->numeric(decimalPlaces: 2)
+                    ->currency(fn (Invoice $record): string => (string) $record->currency)
                     ->sortable(query: fn ($query, $direction) => $query->orderBy('total', $direction))
                     ->color(fn ($record) => bccomp($record->balanceDue(), '0', 2) > 0 ? 'danger' : 'success')
                     ->getStateUsing(fn ($record) => $record?->balanceDue() ?? 0),

@@ -10,6 +10,7 @@ use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class TopOutstandingInvoicesTableWidget extends BaseWidget
 {
@@ -36,9 +37,9 @@ class TopOutstandingInvoicesTableWidget extends BaseWidget
                     ->label(__('Branch')),
                 TextColumn::make('issued_at')
                     ->label(__('Issued')),
-                TextColumn::make('balance')
+                CurrencyColumn::make('balance')
                     ->label(__('Balance'))
-                    ->formatStateUsing(fn (mixed $state, array $record): string => number_format((float) $state, 2).' '.($record['currency'] ?? '')),
+                    ->currency(fn (array $record): ?string => isset($record['currency']) ? (string) $record['currency'] : null),
                 TextColumn::make('days_overdue')
                     ->label(__('Days overdue'))
                     ->numeric(),

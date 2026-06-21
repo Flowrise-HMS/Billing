@@ -8,6 +8,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class AgingBucketsTableWidget extends BaseWidget
 {
@@ -28,9 +29,8 @@ class AgingBucketsTableWidget extends BaseWidget
             ->columns([
                 TextColumn::make('bucket')
                     ->label(__('Bucket')),
-                TextColumn::make('amount')
-                    ->label(__('Amount'))
-                    ->numeric(decimalPlaces: 2),
+                CurrencyColumn::make('amount')
+                    ->label(__('Amount')),
                 TextColumn::make('count')
                     ->label(__('Invoices'))
                     ->numeric(),

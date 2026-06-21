@@ -16,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 use Modules\Core\Models\Unit;
 
 class InvoiceLinesRelationManager extends RelationManager
@@ -90,8 +91,10 @@ class InvoiceLinesRelationManager extends RelationManager
                 TextColumn::make('description')->searchable(),
                 TextColumn::make('quantity')
                     ->formatStateUsing(fn ($record): string => $record->quantity . ' ' . ($record->unit_label_snapshot ?? '')),
-                TextColumn::make('unit_price')->numeric(decimalPlaces: 2),
-                TextColumn::make('line_total')->numeric(decimalPlaces: 2),
+                CurrencyColumn::make('unit_price')
+                    ->currency(fn ($record) => (string) $record->invoice?->currency),
+                CurrencyColumn::make('line_total')
+                    ->currency(fn ($record) => (string) $record->invoice?->currency),
                 TextColumn::make('line_status')->badge(),
             ])
             ->headerActions([

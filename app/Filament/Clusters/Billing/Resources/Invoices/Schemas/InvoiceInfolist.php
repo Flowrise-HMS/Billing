@@ -5,6 +5,7 @@ namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Schemas;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Modules\Core\Filament\Infolists\Components\CurrencyEntry;
 
 class InvoiceInfolist
 {
@@ -18,8 +19,10 @@ class InvoiceInfolist
                         TextEntry::make('invoice_number'),
                         TextEntry::make('status'),
                         TextEntry::make('currency'),
-                        TextEntry::make('total'),
-                        TextEntry::make('amount_paid'),
+                        CurrencyEntry::make('total')
+                            ->currency(fn ($record) => (string) $record->currency),
+                        CurrencyEntry::make('amount_paid')
+                            ->currency(fn ($record) => (string) $record->currency),
                         TextEntry::make('issued_at'),
                     ]),
             ]);

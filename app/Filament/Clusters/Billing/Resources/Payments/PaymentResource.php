@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Pages\ListPayments;
 use Modules\Billing\Models\Payment;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class PaymentResource extends Resource
 {
@@ -56,7 +57,8 @@ class PaymentResource extends Resource
             TextColumn::make('id')->label('ID')->limit(8)->tooltip(fn (Payment $r) => $r->id),
             TextColumn::make('method')->badge(),
             TextColumn::make('gateway'),
-            TextColumn::make('amount')->numeric(decimalPlaces: 2),
+            CurrencyColumn::make('amount')
+                ->currency(fn (Payment $record): string => (string) $record->currency),
             TextColumn::make('currency'),
             TextColumn::make('received_at')->dateTime()->sortable(),
         ];

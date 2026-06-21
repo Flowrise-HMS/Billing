@@ -9,6 +9,7 @@ use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class PaymentMethodBreakdownTableWidget extends BaseWidget
 {
@@ -30,9 +31,8 @@ class PaymentMethodBreakdownTableWidget extends BaseWidget
                 TextColumn::make('method')
                     ->label(__('Method'))
                     ->formatStateUsing(fn (mixed $state): string => PaymentMethod::tryFrom((string) $state)?->getLabel() ?? (string) $state),
-                TextColumn::make('total_collected')
-                    ->label(__('Collected'))
-                    ->numeric(decimalPlaces: 2),
+                CurrencyColumn::make('total_collected')
+                    ->label(__('Collected')),
             ])
             ->paginated(false)
             ->emptyStateHeading(__('No data'));

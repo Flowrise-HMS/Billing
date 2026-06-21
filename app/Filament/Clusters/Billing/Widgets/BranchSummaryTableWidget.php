@@ -8,6 +8,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
+use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class BranchSummaryTableWidget extends BaseWidget
 {
@@ -28,15 +29,12 @@ class BranchSummaryTableWidget extends BaseWidget
             ->columns([
                 TextColumn::make('branch_name')
                     ->label(__('Branch')),
-                TextColumn::make('billed')
-                    ->label(__('Billed'))
-                    ->numeric(decimalPlaces: 2),
-                TextColumn::make('total_collected')
-                    ->label(__('Collected'))
-                    ->numeric(decimalPlaces: 2),
-                TextColumn::make('outstanding')
-                    ->label(__('Outstanding'))
-                    ->numeric(decimalPlaces: 2),
+                CurrencyColumn::make('billed')
+                    ->label(__('Billed')),
+                CurrencyColumn::make('total_collected')
+                    ->label(__('Collected')),
+                CurrencyColumn::make('outstanding')
+                    ->label(__('Outstanding')),
             ])
             ->paginated(false)
             ->emptyStateHeading(__('No data'));
