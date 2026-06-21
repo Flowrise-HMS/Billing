@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Pages\BillingDesk;
-use Modules\Billing\Filament\Concerns\InteractsWithWidgetShield;
+use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\Payment;
 

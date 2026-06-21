@@ -5,7 +5,7 @@ namespace Modules\Billing\Filament\Clusters\Billing\Widgets;
 use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\Reactive;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
-use Modules\Billing\Filament\Concerns\InteractsWithWidgetShield;
+use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
 
 class BranchCollectionsBarChartWidget extends ChartWidget
 {
