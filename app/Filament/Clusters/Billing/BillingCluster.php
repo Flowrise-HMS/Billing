@@ -13,10 +13,4 @@ class BillingCluster extends Cluster
 
     protected static string|\UnitEnum|null $navigationGroup = null;
 
-    public function getHeaderWidgets(): array
-    {
-        return [
-            FinancialStatsWidget::class,
-        ];
-    }
 }

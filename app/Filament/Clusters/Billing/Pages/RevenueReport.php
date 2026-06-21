@@ -13,6 +13,7 @@ use Modules\Billing\Filament\Clusters\Billing\Widgets\AgingBucketsTableWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\AgingDonutChartWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\BranchCollectionsBarChartWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\BranchSummaryTableWidget;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\FinancialStatsWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\InsuranceSplitDonutChartWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\PaymentMethodBreakdownTableWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\PaymentMethodDonutChartWidget;
@@ -124,6 +125,7 @@ class RevenueReport extends Page
         $payload = ['reportPayload' => $this->report];
 
         $widgets = [
+            FinancialStatsWidget::class,
             RevenueTrendChartWidget::make($payload),
             BranchCollectionsBarChartWidget::make($payload),
             PaymentMethodDonutChartWidget::make($payload),
