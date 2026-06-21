@@ -16,17 +16,17 @@ use Modules\Billing\Services\WebhookPaymentService;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class BillingWebhookIdempotencyTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        foreach (['Patient', 'Clinical', 'Appointment', 'Billing'] as $module) {
-            $this->artisan('module:migrate', ['module' => $module, '--force' => true]);
-        }
+        $this->migrateModules(['Core', 'Patient', 'Clinical', 'Appointment', 'Billing']);
     }
 
     public function test_duplicate_paystack_webhook_does_not_double_record_payment(): void

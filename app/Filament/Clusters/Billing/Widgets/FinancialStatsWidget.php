@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
+use Modules\Billing\Filament\Clusters\Billing\Pages\BillingDesk;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\Payment;
 
@@ -18,6 +19,7 @@ class FinancialStatsWidget extends BaseWidget
     use HasWidgetShield;
 
     protected static ?string $cluster = BillingCluster::class;
+    protected static bool $isDiscovered = true;
 
     protected function getStats(): array
     {
@@ -50,7 +52,7 @@ class FinancialStatsWidget extends BaseWidget
                 ->description('Outstanding invoice balances — click to view')
                 ->descriptionIcon('heroicon-m-exclamation-circle')
                 ->color('danger')
-                ->url(\Modules\Billing\Filament\Clusters\Billing\Pages\BillingDesk::getUrl()),
+                ->url(BillingDesk::getUrl()),
         ];
     }
 }

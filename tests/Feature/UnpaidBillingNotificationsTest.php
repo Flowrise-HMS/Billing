@@ -13,17 +13,17 @@ use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\EmergencyContactFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class UnpaidBillingNotificationsTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        foreach (['Patient', 'Clinical', 'Appointment', 'Billing'] as $module) {
-            $this->artisan('module:migrate', ['module' => $module, '--force' => true]);
-        }
+        $this->migrateModules(['Core', 'Patient', 'Clinical', 'Appointment', 'Billing']);
     }
 
     public function test_it_sends_unpaid_notifications_via_notification_fan_out(): void

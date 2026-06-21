@@ -2,7 +2,7 @@
 
 namespace Modules\Billing\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Models\Payment;
@@ -12,14 +12,12 @@ use Tests\TestCase;
 
 class BillingModelTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->artisan('module:migrate', ['module' => 'Core', '--force' => true]);
-        $this->artisan('module:migrate', ['module' => 'Patient', '--force' => true]);
-        $this->artisan('module:migrate', ['module' => 'Billing', '--force' => true]);
+        $this->migrateModules(['Core', 'Patient', 'Billing']);
     }
 
     public function test_invoice_belongs_to_branch(): void

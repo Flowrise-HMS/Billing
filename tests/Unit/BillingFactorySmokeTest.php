@@ -2,7 +2,7 @@
 
 namespace Modules\Billing\Tests\Unit;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\BillingWebhookEvent;
 use Modules\Billing\Models\Invoice;
@@ -14,14 +14,12 @@ use Tests\TestCase;
 
 class BillingFactorySmokeTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->artisan('module:migrate', ['module' => 'Core', '--force' => true]);
-        $this->artisan('module:migrate', ['module' => 'Patient', '--force' => true]);
-        $this->artisan('module:migrate', ['module' => 'Billing', '--force' => true]);
+        $this->migrateModules(['Core', 'Patient', 'Billing']);
     }
 
     public function test_invoice_factory(): void

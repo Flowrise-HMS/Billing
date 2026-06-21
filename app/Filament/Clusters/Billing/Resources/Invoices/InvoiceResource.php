@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\CreateInvoice;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\EditInvoice;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\ListInvoiceActivities;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\ListInvoices;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\ViewInvoice;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\RelationManagers\InvoiceLinesRelationManager;
@@ -58,6 +59,7 @@ class InvoiceResource extends Resource
             'create' => CreateInvoice::route('/create'),
             'edit' => EditInvoice::route('/{record}/edit'),
             'view' => ViewInvoice::route('/{record}'),
+            'activities' => ListInvoiceActivities::route('/{record}/activities'),
         ];
     }
 

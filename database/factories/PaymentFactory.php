@@ -18,9 +18,10 @@ class PaymentFactory extends Factory
         return [
             'patient_id' => Patient::factory(),
             'branch_id' => Branch::factory(),
-            'method' => PaymentMethod::CASH,
+            'method' => PaymentMethod::Cash,
             'amount' => fake()->randomFloat(2, 10, 5000),
             'currency' => 'GHS',
+            'provider_transaction_id' => fake()->uuid(),
             'received_at' => now(),
             'recorded_by' => User::factory(),
         ];

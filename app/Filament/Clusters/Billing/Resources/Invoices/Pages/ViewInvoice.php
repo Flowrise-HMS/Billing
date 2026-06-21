@@ -38,6 +38,10 @@ class ViewInvoice extends ViewRecord
                     }
                     $this->redirect(static::getUrl(['record' => $record]));
                 }),
+            Action::make('activities')
+                ->label('Activities')
+                ->icon('heroicon-o-bell-alert')
+                ->url(fn () => InvoiceResource::getUrl('activities', ['record' => $record])),
             RecordInvoicePaymentAction::make()
                 ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $record->id]))
                 ->visible(fn () => ! in_array($record->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)

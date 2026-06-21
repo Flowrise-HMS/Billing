@@ -18,9 +18,10 @@ class PaymentIntentFactory extends Factory
             'invoice_id' => Invoice::factory(),
             'branch_id' => Branch::factory(),
             'gateway' => fake()->randomElement(['stripe', 'paystack', 'hubtel']),
-            'status' => PaymentIntentStatus::PENDING,
+            'status' => PaymentIntentStatus::Pending,
             'amount' => fake()->randomFloat(2, 10, 5000),
             'currency' => 'GHS',
+            'client_reference' => fake()->uuid(),
             'expires_at' => now()->addHours(2),
         ];
     }

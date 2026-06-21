@@ -26,7 +26,9 @@ class BillingShieldPermissionsSeeder extends Seeder
                 $q->where('name', 'View BillingCluster')
                     ->orWhere('name', 'like', '% Invoice')
                     ->orWhere('name', 'like', '% Payment')
-                    ->orWhere('name', 'like', '%BranchPaymentGatewayConfig');
+                    ->orWhere('name', 'like', '%BranchPaymentGatewayConfig')
+                    ->orWhere('name', 'like', '%RevenueReport%')
+                    ->orWhere('name', 'like', '%ChartWidget%');
             })
             ->pluck('name')
             ->all();

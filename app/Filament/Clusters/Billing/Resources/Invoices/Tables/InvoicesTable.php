@@ -132,6 +132,10 @@ class InvoicesTable
                     ->visible(fn ($record) => $record->status === InvoiceStatus::Draft),
                 ViewAction::make()->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record])),
                 DeleteAction::make(),
+                Action::make('activities')
+                    ->label('Activities')
+                    ->icon('heroicon-o-bell-alert')
+                    ->url(fn ($record) => \Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource::getUrl('activities', ['record' => $record])),
             ])
             ->defaultSort('created_at', 'desc');
     }

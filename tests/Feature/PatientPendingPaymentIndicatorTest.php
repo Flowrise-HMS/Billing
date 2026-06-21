@@ -12,17 +12,17 @@ use Modules\Billing\Services\PatientBalanceQueryService;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class PatientPendingPaymentIndicatorTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        foreach (['Patient', 'Billing'] as $module) {
-            $this->artisan('module:migrate', ['module' => $module, '--force' => true]);
-        }
+        $this->migrateModules(['Core', 'Patient', 'Billing']);
     }
 
     public function test_open_balance_reflects_unpaid_issued_invoice(): void

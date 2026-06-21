@@ -7,5 +7,9 @@
     "providers": [
         "Modules\\Billing\\Providers\\BillingServiceProvider"
     ],
-    "files": []
+    "files": [],
+    "requires": [
+        "Modules\\Core",
+        "Modules\\Patient"
+    ]
 }

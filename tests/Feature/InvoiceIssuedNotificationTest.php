@@ -16,17 +16,17 @@ use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\EmergencyContactFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class InvoiceIssuedNotificationTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        foreach (['Patient', 'Clinical', 'Billing'] as $module) {
-            $this->artisan('module:migrate', ['module' => $module, '--force' => true]);
-        }
+        $this->migrateModules(['Core', 'Patient', 'Clinical', 'Billing']);
     }
 
     public function test_issuing_invoice_notifies_patient_and_billing_emergency_contact_via_mail_and_sms(): void

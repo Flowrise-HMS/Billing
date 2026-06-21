@@ -3,7 +3,7 @@
 namespace Modules\Billing\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Billing\Enums\InvoiceLineStatus;
@@ -21,14 +21,12 @@ use Tests\TestCase;
 
 class InvoiceIssuanceRegressionTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->artisan('module:migrate', ['module' => 'Core', '--force' => true]);
-        $this->artisan('module:migrate', ['module' => 'Billing', '--force' => true]);
+        $this->migrateModules(['Core', 'Patient', 'Billing']);
     }
 
     public function test_issue_and_pay_same_transaction_does_not_fire_unpaid_notice_when_balance_is_zero(): void

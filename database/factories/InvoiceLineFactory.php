@@ -24,7 +24,7 @@ class InvoiceLineFactory extends Factory
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'line_total' => $lineTotal,
-            'line_status' => InvoiceLineStatus::Active,
+            'line_status' => InvoiceLineStatus::Unpaid,
             'patient_responsibility_amount' => $lineTotal,
         ];
     }

@@ -17,17 +17,17 @@ use Modules\Clinical\Events\EncounterFinished;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class EncounterDischargeBillingTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        foreach (['Patient', 'Clinical', 'Billing'] as $module) {
-            $this->artisan('module:migrate', ['module' => $module, '--force' => true]);
-        }
+        $this->migrateModules(['Core', 'Patient', 'Clinical', 'Billing']);
     }
 
     public function test_discharge_creates_draft_invoice_with_zero_total_and_does_not_issue(): void
