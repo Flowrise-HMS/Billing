@@ -2,7 +2,6 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Widgets;
 
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
@@ -11,14 +10,16 @@ use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Pages\BillingDesk;
+use Modules\Billing\Filament\Concerns\InteractsWithWidgetShield;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\Payment;
 
 class FinancialStatsWidget extends BaseWidget
 {
-    use HasWidgetShield;
+    use InteractsWithWidgetShield;
 
     protected static ?string $cluster = BillingCluster::class;
+
     protected static bool $isDiscovered = true;
 
     protected function getStats(): array

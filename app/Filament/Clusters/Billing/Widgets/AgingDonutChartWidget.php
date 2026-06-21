@@ -2,20 +2,21 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Widgets;
 
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\Reactive;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
+use Modules\Billing\Filament\Concerns\InteractsWithWidgetShield;
 
 class AgingDonutChartWidget extends ChartWidget
 {
-    use HasWidgetShield;
+    use InteractsWithWidgetShield;
 
     protected static ?string $cluster = BillingCluster::class;
 
     protected ?string $heading = 'Outstanding by aging bucket';
 
     protected int|string|array $columnSpan = 1;
+
     protected static bool $isDiscovered = true;
 
     #[Reactive]
