@@ -15,10 +15,10 @@ class BranchPaymentGatewayConfigFactory extends Factory
         return [
             'branch_id' => Branch::factory(),
             'driver' => fake()->randomElement(['stripe', 'paystack', 'hubtel']),
-            'display_name' => fake()->company() . ' Gateway',
-            'public_key' => 'pk_test_' . fake()->uuid(),
-            'secret_key' => 'sk_test_' . fake()->uuid(),
-            'webhook_secret' => 'whsec_' . fake()->uuid(),
+            'display_name' => fake()->company().' Gateway',
+            'public_key' => 'pk_test_'.fake()->uuid(),
+            'secret_key' => 'sk_test_'.fake()->uuid(),
+            'webhook_secret' => 'whsec_'.fake()->uuid(),
             'is_enabled' => true,
             'test_mode' => true,
         ];

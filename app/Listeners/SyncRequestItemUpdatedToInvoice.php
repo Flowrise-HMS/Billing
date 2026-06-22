@@ -4,6 +4,7 @@ namespace Modules\Billing\Listeners;
 
 use Modules\Billing\Services\InvoiceLineSyncService;
 use Modules\Clinical\Events\RequestItemUpdated;
+use Modules\Core\Support\AppSettings;
 
 class SyncRequestItemUpdatedToInvoice
 {
@@ -14,7 +15,7 @@ class SyncRequestItemUpdatedToInvoice
     public function handle(RequestItemUpdated $event): void
     {
         try {
-            if (! app(\Modules\Core\Support\AppSettings::class)->billing()->auto_sync_request_items) {
+            if (! app(AppSettings::class)->billing()->auto_sync_request_items) {
                 return;
             }
         } catch (\Throwable) {

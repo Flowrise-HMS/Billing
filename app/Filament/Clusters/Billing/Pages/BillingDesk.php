@@ -19,10 +19,10 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
-use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
 use Modules\Billing\Models\Invoice;
 use Modules\Core\Classes\Services\BranchService;
+use Modules\Core\Settings\FeatureSettings;
 
 class BillingDesk extends Page implements HasTable
 {
@@ -50,6 +50,7 @@ class BillingDesk extends Page implements HasTable
     {
         if (! $this->selectedInvoiceId) {
             $this->selectedInvoice = null;
+
             return;
         }
 
@@ -58,6 +59,7 @@ class BillingDesk extends Page implements HasTable
 
         if (! $invoice) {
             $this->selectedInvoice = null;
+
             return;
         }
 
@@ -84,8 +86,6 @@ class BillingDesk extends Page implements HasTable
                 ->toArray(),
         ];
     }
-
-
 
     public function table(Table $table): Table
     {
@@ -124,6 +124,7 @@ class BillingDesk extends Page implements HasTable
                             return $query;
                         }
                         $search = $data['search'];
+
                         return $query->whereHas('patient', fn (Builder $q): Builder => $q
                             ->where('mrn', 'like', "%{$search}%")
                             ->orWhere('first_name', 'like', "%{$search}%")
@@ -182,11 +183,9 @@ class BillingDesk extends Page implements HasTable
                     }),
             ], layout: FiltersLayout::AboveContent)
             ->defaultSort('issued_at', 'asc')
-            ->paginated([10, 25, 50,100])
+            ->paginated([10, 25, 50, 100])
             ->searchable();
     }
-
-
 
     protected function getHeaderActions(): array
     {
@@ -206,7 +205,7 @@ class BillingDesk extends Page implements HasTable
     public static function shouldRegisterNavigation(): bool
     {
         try {
-            return app(\Modules\Core\Settings\FeatureSettings::class)->billing_desk_enabled;
+            return app(FeatureSettings::class)->billing_desk_enabled;
         } catch (\Throwable) {
             return true;
         }

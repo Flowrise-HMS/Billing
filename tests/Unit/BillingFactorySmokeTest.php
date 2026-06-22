@@ -3,8 +3,8 @@
 namespace Modules\Billing\Tests\Unit;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\BillingWebhookEvent;
+use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Models\Payment;

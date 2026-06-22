@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Tests\Feature;
 
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Mail;
 use Modules\Billing\Enums\InvoiceLineStatus;
@@ -16,7 +17,6 @@ use Modules\Billing\Services\PaymentRecordingService;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class BillingInvoicePaymentTest extends TestCase

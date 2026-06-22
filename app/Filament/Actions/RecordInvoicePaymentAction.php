@@ -4,6 +4,7 @@ namespace Modules\Billing\Filament\Actions;
 
 use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -73,14 +74,14 @@ class RecordInvoicePaymentAction
                         ->label(__('Line items'))
                         ->visible(fn (Get $get) => $get('payment_mode') === 'selected')
                         ->schema([
-                            \Filament\Forms\Components\Hidden::make('line_id'),
+                            Hidden::make('line_id'),
                             TextInput::make('description')
                                 ->label(__('Item'))
                                 ->disabled()
                                 ->dehydrated(false)
                                 ->columnSpan(2),
                             TextInput::make('balance')
-                                ->label(__('Balance (' . $currency . ')'))
+                                ->label(__('Balance ('.$currency.')'))
                                 ->disabled()
                                 ->dehydrated(false),
                             TextInput::make('amount')
@@ -142,10 +143,11 @@ class RecordInvoicePaymentAction
                         ->visible(fn (Get $get) => $get('payment_method') === PaymentMethod::Cash->value),
                 ];
             })
-            ->action(function (array $data, array $arguments = [], PaymentRecordingService $payments, InvoiceAllocationBuilder $builder): ?Payment {
+            ->action(function (array $data, array $arguments, PaymentRecordingService $payments, InvoiceAllocationBuilder $builder): ?Payment {
                 $invoiceId = $arguments['invoice_id'] ?? $data['invoice_id'] ?? null;
                 if (! $invoiceId) {
                     Notification::make()->danger()->title(__('Invoice not specified.'))->send();
+
                     return null;
                 }
 
@@ -154,17 +156,20 @@ class RecordInvoicePaymentAction
 
                 if ($invoice->status === InvoiceStatus::Void) {
                     Notification::make()->danger()->title(__('Cannot collect payment on void invoices.'))->send();
+
                     return null;
                 }
 
                 if (bccomp($invoice->balanceDue(), '0', 2) <= 0) {
                     Notification::make()->danger()->title(__('Invoice has no outstanding balance.'))->send();
+
                     return null;
                 }
 
                 $userBranchId = Context::get('current_branch_id', Auth::user()?->branch_id);
                 if ($userBranchId !== null && (string) $userBranchId !== (string) $invoice->branch_id) {
                     Notification::make()->danger()->title(__('Invoice belongs to a different branch.'))->send();
+
                     return null;
                 }
 
@@ -181,6 +186,7 @@ class RecordInvoicePaymentAction
                         ->danger()
                         ->title(__('No valid allocations to record.'))
                         ->send();
+
                     return null;
                 }
 
@@ -247,6 +253,7 @@ class RecordInvoicePaymentAction
                 $allocations[(string) $line->id] = $remaining;
             }
         }
+
         return $allocations;
     }
 

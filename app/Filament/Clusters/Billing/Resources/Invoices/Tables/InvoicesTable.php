@@ -21,7 +21,6 @@ use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Models\Invoice;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
-use Modules\Patient\Classes\Services\PatientSearchService;
 
 class InvoicesTable
 {
@@ -103,13 +102,13 @@ class InvoicesTable
                     ->multiple(),
                 SelectFilter::make('branch_id')
                     ->label(__('Branch'))
-                    ->relationship('branch','name')
+                    ->relationship('branch', 'name')
                     ->preload()
                     ->searchable(),
                 SelectFilter::make('patient_id')
                     ->label(__('Patient'))
-                    ->relationship('patient','mrn')
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record?->display_name)
+                    ->relationship('patient', 'mrn')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record?->display_name)
                     ->preload()
                     ->searchable(),
             ], layout: FiltersLayout::AboveContent)
@@ -118,7 +117,7 @@ class InvoicesTable
                     ->mountUsing(function ($action, $record): void {
                         $action->arguments(['invoice_id' => $record?->id]);
                     })
-                    ->visible(fn ($record) => !empty($record) && ! in_array($record?->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
+                    ->visible(fn ($record) => ! empty($record) && ! in_array($record?->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
                         && bccomp($record?->balanceDue(), '0', 2) > 0),
 
                 Action::make('invoice_pdf')
@@ -140,7 +139,7 @@ class InvoicesTable
                 Action::make('activities')
                     ->label('Activities')
                     ->icon('heroicon-o-bell-alert')
-                    ->url(fn ($record) => \Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource::getUrl('activities', ['record' => $record])),
+                    ->url(fn ($record) => InvoiceResource::getUrl('activities', ['record' => $record])),
             ])
             ->defaultSort('created_at', 'desc');
     }

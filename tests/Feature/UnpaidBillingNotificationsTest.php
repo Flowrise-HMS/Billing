@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Tests\Feature;
 
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Notification;
 use Modules\Billing\Enums\InvoiceStatus;
@@ -13,7 +14,6 @@ use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\EmergencyContactFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class UnpaidBillingNotificationsTest extends TestCase

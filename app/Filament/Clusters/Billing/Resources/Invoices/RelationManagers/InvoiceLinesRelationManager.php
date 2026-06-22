@@ -90,7 +90,7 @@ class InvoiceLinesRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('description')->searchable(),
                 TextColumn::make('quantity')
-                    ->formatStateUsing(fn ($record): string => $record->quantity . ' ' . ($record->unit_label_snapshot ?? '')),
+                    ->formatStateUsing(fn ($record): string => $record->quantity.' '.($record->unit_label_snapshot ?? '')),
                 CurrencyColumn::make('unit_price')
                     ->currency(fn ($record) => (string) $record->invoice?->currency),
                 CurrencyColumn::make('line_total')

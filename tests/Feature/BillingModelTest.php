@@ -5,7 +5,6 @@ namespace Modules\Billing\Tests\Feature;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
-use Modules\Billing\Models\Payment;
 use Modules\Core\Models\Branch;
 use Modules\Patient\Models\Patient;
 use Tests\TestCase;

@@ -24,7 +24,7 @@ class InvoiceFactory extends Factory
             'branch_id' => Branch::factory(),
             'patient_id' => Patient::factory(),
             'invoice_type' => InvoiceType::Standalone,
-            'invoice_number' => 'INV-' . strtoupper(fake()->bothify('####??')),
+            'invoice_number' => 'INV-'.strtoupper(fake()->bothify('####??')),
             'status' => InvoiceStatus::Draft,
             'issued_at' => $issuedAt,
             'due_at' => $dueAt,

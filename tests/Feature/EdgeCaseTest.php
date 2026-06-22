@@ -12,6 +12,7 @@ use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Models\Payment;
 use Modules\Billing\Models\PaymentIntent;
+use Modules\Core\Models\Branch;
 use Tests\TestCase;
 
 class EdgeCaseTest extends TestCase
@@ -201,7 +202,7 @@ class EdgeCaseTest extends TestCase
 
     public function test_generate_invoice_number_format(): void
     {
-        $branch = \Modules\Core\Models\Branch::factory()->create();
+        $branch = Branch::factory()->create();
         $number = Invoice::generateInvoiceNumber($branch->id);
         $this->assertStringStartsWith('INV-', $number);
         $this->assertStringContainsString(now()->format('Ymd'), $number);
@@ -209,7 +210,7 @@ class EdgeCaseTest extends TestCase
 
     public function test_generate_invoice_number_uniqueness(): void
     {
-        $branch = \Modules\Core\Models\Branch::factory()->create();
+        $branch = Branch::factory()->create();
         $num1 = Invoice::generateInvoiceNumber($branch->id);
         $num2 = Invoice::generateInvoiceNumber($branch->id);
         $this->assertNotSame($num1, $num2);

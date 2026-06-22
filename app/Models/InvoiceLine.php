@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Core\Models\Service;
+use Modules\Core\Models\Unit;
 
 class InvoiceLine extends Model
 {
@@ -97,6 +98,6 @@ class InvoiceLine extends Model
 
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Core\Models\Unit::class);
+        return $this->belongsTo(Unit::class);
     }
 }

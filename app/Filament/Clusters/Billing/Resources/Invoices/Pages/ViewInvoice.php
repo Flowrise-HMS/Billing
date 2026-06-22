@@ -18,6 +18,7 @@ class ViewInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         $record = $this->getRecord();
+
         return [
             Action::make('editDraft')
                 ->label(__('Edit lines'))
@@ -29,7 +30,7 @@ class ViewInvoice extends ViewRecord
                 ->icon(Heroicon::OutlinedPaperAirplane)
                 ->visible(fn () => $record?->status === InvoiceStatus::Draft)
                 ->requiresConfirmation()
-                ->action(function (InvoiceIssuanceService $issuance) use($record) {
+                ->action(function (InvoiceIssuanceService $issuance) use ($record) {
                     Context::add('current_branch_id', $record?->branch_id);
                     try {
                         $issuance->issue($record?->fresh());

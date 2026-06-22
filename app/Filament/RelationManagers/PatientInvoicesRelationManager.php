@@ -2,17 +2,11 @@
 
 namespace Modules\Billing\Filament\RelationManagers;
 
-use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
-use Modules\Billing\Enums\InvoiceStatus;
-use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
-use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
-use Modules\Billing\Models\Invoice;
 
 class PatientInvoicesRelationManager extends RelationManager
 {

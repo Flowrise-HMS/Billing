@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notification;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Notifications\Concerns\BuildsPatientFacingChannels;
 use Modules\Core\Notifications\Concerns\RespectsNotificationSettings;
+use Modules\Core\Support\AppSettings;
 
 // todo:: payment gateway yet to be implemented
 // (when wired, append a pay-now URL/MoMo prompt to both mail and SMS bodies)
@@ -23,8 +24,8 @@ class InvoiceIssuedNotification extends Notification implements ShouldQueue
         $channels = $this->channelsFor($notifiable);
 
         try {
-            $settings = app(\Modules\Core\Support\AppSettings::class)->notifications();
-            $billing = app(\Modules\Core\Support\AppSettings::class)->billing();
+            $settings = app(AppSettings::class)->notifications();
+            $billing = app(AppSettings::class)->billing();
 
             return $this->applyNotificationSettings(
                 $channels,

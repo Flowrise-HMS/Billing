@@ -9,6 +9,7 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\BranchPaymentGatewayConf
 class ListBranchPaymentGatewayConfigs extends ListRecords
 {
     protected static string $resource = BranchPaymentGatewayConfigResource::class;
+
     protected function getHeaderActions(): array
     {
         return [

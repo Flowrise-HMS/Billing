@@ -37,13 +37,13 @@ class PaymentResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')
                     ->label(__('Branch'))
-                    ->relationship('branch','name')
+                    ->relationship('branch', 'name')
                     ->preload()
                     ->searchable(),
                 SelectFilter::make('patient_id')
                     ->label(__('Patient'))
-                    ->relationship('patient','mrn')
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record?->display_name)
+                    ->relationship('patient', 'mrn')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record?->display_name)
                     ->preload()
                     ->searchable(),
             ])
