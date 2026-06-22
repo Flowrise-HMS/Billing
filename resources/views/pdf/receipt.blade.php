@@ -15,8 +15,11 @@
     </style>
 </head>
 <body>
+    @include('core::print.partials.pdf-brand-header', [
+        'branchId' => $payment->branch_id,
+        'subtitle' => $payment->branch?->name,
+    ])
     <h1>{{ __('Payment receipt') }}</h1>
-    <div class="muted">{{ app_settings($payment->branch_id)->displayName() }}</div>
 
     <div class="section">
         <strong>{{ __('Receipt ID') }}:</strong> {{ $payment->id }}<br>

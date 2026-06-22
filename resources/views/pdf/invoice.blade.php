@@ -17,11 +17,11 @@
     </style>
 </head>
 <body>
+    @include('core::print.partials.pdf-brand-header', [
+        'branchId' => $invoice->branch_id,
+        'subtitle' => $invoice->branch?->name,
+    ])
     <h1>{{ __('Invoice') }}</h1>
-    <div class="muted">{{ app_settings($invoice->branch_id)->displayName() }}</div>
-    @if($invoice->branch?->name)
-        <div class="muted">{{ $invoice->branch->name }}</div>
-    @endif
 
     <div class="section">
         <strong>{{ __('Invoice #') }}:</strong> {{ $invoice->invoice_number }}<br>
