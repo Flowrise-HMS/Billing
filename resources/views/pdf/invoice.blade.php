@@ -18,7 +18,7 @@
 </head>
 <body>
     <h1>{{ __('Invoice') }}</h1>
-    <div class="muted">{{ config('app.name') }}</div>
+    <div class="muted">{{ app_settings($invoice->branch_id)->displayName() }}</div>
     @if($invoice->branch?->name)
         <div class="muted">{{ $invoice->branch->name }}</div>
     @endif

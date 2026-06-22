@@ -202,4 +202,13 @@ class BillingDesk extends Page implements HasTable
     {
         return __('Billing Desk');
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        try {
+            return app(\Modules\Core\Settings\FeatureSettings::class)->billing_desk_enabled;
+        } catch (\Throwable) {
+            return true;
+        }
+    }
 }

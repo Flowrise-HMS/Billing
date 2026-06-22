@@ -73,6 +73,11 @@ flowchart LR
 
 Current rollout: [module status](../../docs/shared/module-status.md).
 
+## Further reading
+
+- **Staff-facing workflows:** [Billing Workflows](../../docs/user-guide/billing.md)
+- **Admin setup:** [Billing Administration](../../docs/admin-guide/billing.md)
+
 ## For developers
 
 - **Namespace:** `Modules\Billing\...`

@@ -17,6 +17,14 @@ class FinalizeEncounterBilling
 
     public function handle(EncounterFinished $event): void
     {
+        try {
+            if (! app(\Modules\Core\Support\AppSettings::class)->billing()->auto_issue_on_discharge) {
+                return;
+            }
+        } catch (\Throwable) {
+            // fall through with legacy behaviour
+        }
+
         $encounter = $event->encounter->fresh();
 
         $this->encounterInvoiceService->ensureDraftInvoiceForEncounter($encounter);

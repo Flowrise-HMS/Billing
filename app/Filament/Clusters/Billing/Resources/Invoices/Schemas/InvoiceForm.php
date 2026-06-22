@@ -7,6 +7,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Modules\Billing\Enums\InvoiceType;
+use Modules\Core\Support\Currency;
 use Modules\Patient\Models\Patient;
 
 class InvoiceForm
@@ -40,7 +41,7 @@ class InvoiceForm
                             ->label(__('Currency'))
                             ->length(3)
                             ->maxLength(3)
-                            ->default('GHS')
+                            ->default(fn () => Currency::defaultCode())
                             ->required(),
                     ]),
             ]);

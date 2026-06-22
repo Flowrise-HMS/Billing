@@ -8,18 +8,33 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Notifications\Concerns\BuildsPatientFacingChannels;
+use Modules\Core\Notifications\Concerns\RespectsNotificationSettings;
 
 // todo:: payment gateway yet to be implemented
 // (when wired, append a pay-now URL/MoMo prompt to both mail and SMS bodies)
 class InvoiceLineAddedNotification extends Notification implements ShouldQueue
 {
-    use BuildsPatientFacingChannels, Queueable;
+    use BuildsPatientFacingChannels, Queueable, RespectsNotificationSettings;
 
     public function __construct(protected InvoiceLine $line) {}
 
     public function via(object $notifiable): array
     {
-        return $this->channelsFor($notifiable);
+        $channels = $this->channelsFor($notifiable);
+
+        try {
+            $settings = app(\Modules\Core\Support\AppSettings::class)->notifications();
+            $billing = app(\Modules\Core\Support\AppSettings::class)->billing();
+
+            return $this->applyNotificationSettings(
+                $channels,
+                $settings->invoice_line_added_mail,
+                $settings->invoice_line_added_sms,
+                $billing->sms_enabled,
+            );
+        } catch (\Throwable) {
+            return $channels;
+        }
     }
 
     public function toMail(object $notifiable): MailMessage

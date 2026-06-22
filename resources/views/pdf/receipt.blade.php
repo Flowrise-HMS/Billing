@@ -16,7 +16,7 @@
 </head>
 <body>
     <h1>{{ __('Payment receipt') }}</h1>
-    <div class="muted">{{ config('app.name') }}</div>
+    <div class="muted">{{ app_settings($payment->branch_id)->displayName() }}</div>
 
     <div class="section">
         <strong>{{ __('Receipt ID') }}:</strong> {{ $payment->id }}<br>

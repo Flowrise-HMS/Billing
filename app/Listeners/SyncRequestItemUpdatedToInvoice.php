@@ -13,6 +13,13 @@ class SyncRequestItemUpdatedToInvoice
 
     public function handle(RequestItemUpdated $event): void
     {
+        try {
+            if (! app(\Modules\Core\Support\AppSettings::class)->billing()->auto_sync_request_items) {
+                return;
+            }
+        } catch (\Throwable) {
+        }
+
         $this->invoiceLineSyncService->syncFromRequestItem(
             $event->requestItem->fresh(['serviceRequest.encounter', 'service'])
         );
