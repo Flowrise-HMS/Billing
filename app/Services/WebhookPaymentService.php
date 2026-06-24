@@ -89,7 +89,8 @@ class WebhookPaymentService
                 $amountMajor = $due;
             }
 
-            $allocations = $this->allocationBuilder->allocateAmountAcrossUnpaidLines($invoice, $amountMajor);
+            $lineIds = $intent->line_ids ?? null;
+            $allocations = $this->allocationBuilder->allocateAmountAcrossUnpaidLines($invoice, $amountMajor, $lineIds);
 
             if ($allocations === []) {
                 BillingWebhookEvent::query()

@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\RelationManagers;
 
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Modules\Billing\Enums\InvoiceLineStatus;
@@ -120,6 +122,17 @@ class InvoiceLinesRelationManager extends RelationManager
                     ->visible(fn () => $this->getOwnerRecord()->status === InvoiceStatus::Draft),
                 DeleteAction::make()
                     ->visible(fn () => $this->getOwnerRecord()->status === InvoiceStatus::Draft),
+                Action::make('checkout')
+                    ->label(__('Checkout'))
+                    ->icon(Heroicon::OutlinedCreditCard)
+                    ->color('success')
+                    ->visible(fn ($record) => in_array($record->line_status, [InvoiceLineStatus::Unpaid, InvoiceLineStatus::Partial], true)
+                        && in_array($this->getOwnerRecord()->status, [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid], true))
+                    ->url(fn ($record) => route('billing.invoices.line-checkout', [
+                        'invoice' => $record->invoice_id,
+                        'lines' => $record->id,
+                    ]))
+                    ->openUrlInNewTab(),
             ]);
     }
 }

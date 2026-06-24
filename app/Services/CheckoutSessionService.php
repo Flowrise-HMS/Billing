@@ -11,6 +11,7 @@ use Modules\Billing\Events\PaymentCheckoutSessionCreated;
 use Modules\Billing\Gateways\PaymentGatewayManager;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\Invoice;
+use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Models\PaymentIntent;
 
 class CheckoutSessionService
@@ -19,12 +20,22 @@ class CheckoutSessionService
         protected PaymentGatewayManager $gatewayManager
     ) {}
 
+    /**
+     * @param  string[]|null  $lineIds  Restrict checkout to specific line IDs
+     */
     public function createForInvoice(
         Invoice $invoice,
         string $driver,
-        array $metadata = []
+        array $metadata = [],
+        ?array $lineIds = null
     ): PaymentIntent {
-        if (bccomp($invoice->balanceDue(), '0', 2) <= 0) {
+        if ($lineIds) {
+            $amount = $this->calculateLineTotal($invoice, $lineIds);
+        } else {
+            $amount = $invoice->balanceDue();
+        }
+
+        if (bccomp($amount, '0', 2) <= 0) {
             throw new InvalidArgumentException('Invoice has no balance due.');
         }
 
@@ -38,15 +49,15 @@ class CheckoutSessionService
             throw new InvalidArgumentException('Gateway is not configured for this branch.');
         }
 
-        return DB::transaction(function () use ($invoice, $config, $metadata) {
+        return DB::transaction(function () use ($invoice, $config, $metadata, $amount, $lineIds) {
             $intent = PaymentIntent::query()->create([
                 'invoice_id' => $invoice->id,
                 'branch_id' => $invoice->branch_id,
                 'gateway' => $config->driver,
                 'status' => PaymentIntentStatus::Pending,
-                'amount' => $invoice->balanceDue(),
+                'amount' => $amount,
                 'currency' => $invoice->currency,
-                'line_ids' => null,
+                'line_ids' => $lineIds,
                 'client_reference' => (string) Str::uuid(),
                 'metadata' => $metadata,
                 'expires_at' => now()->addHours(2),
@@ -59,5 +70,23 @@ class CheckoutSessionService
 
             return $intent->fresh();
         });
+    }
+
+    /**
+     * @param  string[]  $lineIds
+     */
+    protected function calculateLineTotal(Invoice $invoice, array $lineIds): string
+    {
+        $lines = InvoiceLine::query()
+            ->where('invoice_id', $invoice->id)
+            ->whereIn('id', $lineIds)
+            ->get();
+
+        $total = '0';
+        foreach ($lines as $line) {
+            $total = bcadd($total, $line->remainingAmount(), 2);
+        }
+
+        return $total;
     }
 }

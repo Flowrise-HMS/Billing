@@ -10,14 +10,20 @@ class InvoiceAllocationBuilder
     /**
      * Build sequential allocations up to $amount (major currency units) across unpaid lines.
      *
+     * @param  string[]|null  $onlyLineIds  If set, restrict to these line IDs only
      * @return array<string, string> line_id => amount
      */
-    public function allocateAmountAcrossUnpaidLines(Invoice $invoice, string $amount): array
+    public function allocateAmountAcrossUnpaidLines(Invoice $invoice, string $amount, ?array $onlyLineIds = null): array
     {
         $allocations = [];
         $remaining = $amount;
 
-        foreach ($invoice->lines()->orderBy('id')->get() as $line) {
+        $lines = $invoice->lines()->orderBy('id');
+        if ($onlyLineIds !== null) {
+            $lines->whereIn('id', $onlyLineIds);
+        }
+
+        foreach ($lines->get() as $line) {
             if ($line->line_status === InvoiceLineStatus::Void) {
                 continue;
             }
