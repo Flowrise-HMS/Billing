@@ -3,8 +3,8 @@
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEvents;
 
 use BackedEnum;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEvents\Pages\ListBillingWebhookEvents;
 use Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEvents\Pages\ViewBillingWebhookEvent;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\PaymentResource;
 use Modules\Billing\Models\BillingWebhookEvent;
 
 class BillingWebhookEventResource extends Resource
@@ -40,8 +41,8 @@ class BillingWebhookEventResource extends Resource
                     ->label('Payment')
                     ->formatStateUsing(fn ($state) => $state ? substr((string) $state, 0, 8).'…' : '—')
                     ->url(fn (BillingWebhookEvent $record) => $record->payment_id
-                        ? \Filament\Resources\Pages\Page::getResourceUrl(
-                            \Modules\Billing\Filament\Clusters\Billing\Resources\Payments\PaymentResource::class,
+                        ? Page::getResourceUrl(
+                            PaymentResource::class,
                             ['record' => $record->payment_id],
                             'view',
                         )

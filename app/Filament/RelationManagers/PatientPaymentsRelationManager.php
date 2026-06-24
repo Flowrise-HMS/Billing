@@ -2,9 +2,11 @@
 
 namespace Modules\Billing\Filament\RelationManagers;
 
+use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Billing\Filament\Actions\RecordDepositAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\PaymentResource;
 
 class PatientPaymentsRelationManager extends RelationManager
@@ -21,6 +23,10 @@ class PatientPaymentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('id')
             ->columns(PaymentResource::getPaymentTableColumns())
+            ->headerActions([
+                RecordDepositAction::make()
+                    ->mountUsing(fn (Action $action) => $action->arguments(['patient_id' => $this->getOwnerRecord()->id])),
+            ])
             ->recordActions(PaymentResource::getPaymentRecordActions())
             ->defaultSort('received_at', 'desc');
     }

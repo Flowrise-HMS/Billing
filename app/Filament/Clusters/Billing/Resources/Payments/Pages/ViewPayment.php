@@ -2,9 +2,12 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Pages;
 
+use Filament\Actions\Action;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
+use Modules\Billing\Filament\Actions\RefundPaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\PaymentResource;
 use Modules\Core\Filament\Infolists\Components\CurrencyEntry;
 
@@ -12,7 +15,15 @@ class ViewPayment extends ViewRecord
 {
     protected static string $resource = PaymentResource::class;
 
-    public function infolist(\Filament\Schemas\Schema $schema): \Filament\Schemas\Schema
+    protected function getHeaderActions(): array
+    {
+        return [
+            RefundPaymentAction::make()
+                ->mountUsing(fn (Action $action) => $action->arguments(['payment_id' => $this->getRecord()->id])),
+        ];
+    }
+
+    public function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([
@@ -21,6 +32,7 @@ class ViewPayment extends ViewRecord
                     ->schema([
                         TextEntry::make('patient.display_name')->label(__('Patient')),
                         TextEntry::make('branch.name')->label(__('Branch')),
+                        TextEntry::make('type')->badge(),
                         TextEntry::make('method')->badge(),
                         TextEntry::make('gateway'),
                         CurrencyEntry::make('amount')
@@ -36,5 +48,4 @@ class ViewPayment extends ViewRecord
                     ]),
             ]);
     }
-
 }

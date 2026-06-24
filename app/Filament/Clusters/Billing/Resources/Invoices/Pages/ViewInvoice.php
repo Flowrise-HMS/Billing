@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Context;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
-use Modules\Billing\Models\Invoice;
 use Modules\Billing\Services\InvoiceIssuanceService;
 
 class ViewInvoice extends ViewRecord

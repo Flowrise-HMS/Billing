@@ -12,9 +12,12 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Modules\Billing\Enums\PaymentType;
+use Modules\Billing\Filament\Actions\RefundPaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Pages\ListPayments;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Pages\ViewPayment;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\RelationManagers\PaymentAllocationsRelationManager;
 use Modules\Billing\Models\Payment;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
@@ -56,6 +59,12 @@ class PaymentResource extends Resource
     {
         return [
             TextColumn::make('id')->label('ID')->limit(8)->tooltip(fn (Payment $r) => $r->id),
+            TextColumn::make('type')->badge()->color(fn (PaymentType $state) => match ($state) {
+                PaymentType::Payment => 'success',
+                PaymentType::WriteOff => 'gray',
+                PaymentType::Refund => 'danger',
+                PaymentType::Deposit => 'info',
+            }),
             TextColumn::make('method')->badge(),
             TextColumn::make('gateway'),
             CurrencyColumn::make('amount')
@@ -80,6 +89,9 @@ class PaymentResource extends Resource
                 ->url(fn (Payment $record) => route('billing.payments.receipt', ['payment' => $record, 'download' => 1]))
                 ->openUrlInNewTab()
                 ->visible(fn () => Auth::user()?->can('download_receipt')),
+            RefundPaymentAction::make()
+                ->mountUsing(fn (Action $action, Payment $record) => $action->arguments(['payment_id' => $record->id]))
+                ->visible(fn (Payment $record) => $record->type === PaymentType::Payment),
         ];
     }
 
@@ -94,7 +106,7 @@ class PaymentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \Modules\Billing\Filament\Clusters\Billing\Resources\Payments\RelationManagers\PaymentAllocationsRelationManager::class,
+            PaymentAllocationsRelationManager::class,
         ];
     }
 

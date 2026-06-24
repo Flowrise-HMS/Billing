@@ -5,13 +5,14 @@ namespace Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEven
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
 use Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEvents\BillingWebhookEventResource;
 
 class ViewBillingWebhookEvent extends ViewRecord
 {
     protected static string $resource = BillingWebhookEventResource::class;
 
-    public function infolist(\Filament\Schemas\Schema $schema): \Filament\Schemas\Schema
+    public function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([

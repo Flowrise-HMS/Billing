@@ -5,13 +5,14 @@ namespace Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Pag
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\PaymentIntentResource;
 
 class ViewPaymentIntent extends ViewRecord
 {
     protected static string $resource = PaymentIntentResource::class;
 
-    public function infolist(\Filament\Schemas\Schema $schema): \Filament\Schemas\Schema
+    public function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([

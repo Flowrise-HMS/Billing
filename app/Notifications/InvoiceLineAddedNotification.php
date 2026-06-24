@@ -70,7 +70,7 @@ class InvoiceLineAddedNotification extends Notification implements ShouldQueue
         $message = __('Billing update: invoice :number changed.', ['number' => $invoice->invoice_number]);
 
         if ($checkoutUrl) {
-            $message .= ' '. __('Pay now: :url', ['url' => $checkoutUrl]);
+            $message .= ' '.__('Pay now: :url', ['url' => $checkoutUrl]);
         }
 
         return $message;

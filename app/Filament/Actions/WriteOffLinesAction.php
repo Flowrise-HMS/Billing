@@ -8,6 +8,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentType;
+use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Services\PaymentRecordingService;
 
 class WriteOffLinesAction
@@ -28,7 +29,7 @@ class WriteOffLinesAction
                     return;
                 }
 
-                $line = \Modules\Billing\Models\InvoiceLine::query()
+                $line = InvoiceLine::query()
                     ->whereKey($lineId)
                     ->with('invoice')
                     ->first();

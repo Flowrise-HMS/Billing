@@ -3,6 +3,7 @@
 namespace Modules\Billing\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Modules\Billing\Console\FlagOverdueInvoices;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
@@ -11,7 +12,6 @@ use Modules\Billing\Observers\InvoiceLineObserver;
 use Modules\Billing\Policies\BranchPaymentGatewayConfigPolicy;
 use Modules\Billing\Policies\InvoicePolicy;
 use Modules\Billing\Policies\PaymentPolicy;
-use Modules\Billing\Console\FlagOverdueInvoices;
 use Modules\Billing\Services\PatientFinancialHoldService;
 use Modules\Clinical\Models\Encounter;
 use Modules\Core\Contracts\PatientFinancialHoldChecker;

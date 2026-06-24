@@ -12,7 +12,6 @@ use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Services\InvoiceIssuanceService;
 use Modules\Billing\Services\InvoiceTotalsService;
-use Modules\Core\Enums\CoverageType;
 
 class HandleAppointmentCheckInBilling
 {

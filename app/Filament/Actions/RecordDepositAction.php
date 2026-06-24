@@ -8,10 +8,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentType;
 use Modules\Billing\Models\Payment;
-use Modules\Patient\Models\Patient;
 
 class RecordDepositAction
 {
@@ -56,7 +56,7 @@ class RecordDepositAction
                     'type' => PaymentType::Deposit,
                     'amount' => $data['amount'],
                     'currency' => 'GHS',
-                    'provider_transaction_id' => $data['reference'] ?? (string) \Illuminate\Support\Str::uuid(),
+                    'provider_transaction_id' => $data['reference'] ?? (string) Str::uuid(),
                     'received_at' => now(),
                     'recorded_by' => Auth::id(),
                     'metadata' => ['source' => 'filament', 'action' => 'deposit'],

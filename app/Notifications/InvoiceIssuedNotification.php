@@ -66,7 +66,7 @@ class InvoiceIssuedNotification extends Notification implements ShouldQueue
         $message = __('Invoice :number is ready.', ['number' => $invoice->invoice_number]);
 
         if ($checkoutUrl) {
-            $message .= ' '. __('Pay now: :url', ['url' => $checkoutUrl]);
+            $message .= ' '.__('Pay now: :url', ['url' => $checkoutUrl]);
         }
 
         return $message;
