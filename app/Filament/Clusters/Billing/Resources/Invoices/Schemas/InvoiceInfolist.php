@@ -24,7 +24,9 @@ class InvoiceInfolist
                         CurrencyEntry::make('amount_paid')
                             ->currency(fn ($record) => (string) $record->currency),
                         TextEntry::make('issued_at'),
+                        TextEntry::make('due_at')->dateTime(),
                     ]),
+
             ]);
     }
 }

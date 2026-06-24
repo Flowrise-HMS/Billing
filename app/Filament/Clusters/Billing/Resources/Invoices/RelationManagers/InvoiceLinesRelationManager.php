@@ -96,6 +96,14 @@ class InvoiceLinesRelationManager extends RelationManager
                 CurrencyColumn::make('line_total')
                     ->currency(fn ($record) => (string) $record->invoice?->currency),
                 TextColumn::make('line_status')->badge(),
+                CurrencyColumn::make('patient_responsibility_amount')
+                    ->label('Patient resp.')
+                    ->currency(fn ($record) => (string) $record->invoice?->currency)
+                    ->visible(fn ($record) => $record?->patient_responsibility_amount !== null),
+                CurrencyColumn::make('insurance_expected_amount')
+                    ->label('Ins. expected')
+                    ->currency(fn ($record) => (string) $record->invoice?->currency)
+                    ->visible(fn ($record) => $record?->insurance_expected_amount !== null),
             ])
             ->headerActions([
                 CreateAction::make()

@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Schemas;
 
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -43,6 +44,9 @@ class InvoiceForm
                             ->maxLength(3)
                             ->default(fn () => Currency::defaultCode())
                             ->required(),
+                        DateTimePicker::make('due_at')
+                            ->label(__('Due date'))
+                            ->native(false),
                     ]),
             ]);
     }

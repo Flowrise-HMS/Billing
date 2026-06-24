@@ -52,6 +52,7 @@ class InvoicesTable
                     ->color(fn ($record) => bccomp($record->balanceDue(), '0', 2) > 0 ? 'danger' : 'success')
                     ->getStateUsing(fn ($record) => $record?->balanceDue() ?? 0),
                 TextColumn::make('issued_at')->dateTime()->sortable(),
+                TextColumn::make('due_at')->dateTime()->sortable(),
             ])
             ->filters([
                 Filter::make('issued_at')

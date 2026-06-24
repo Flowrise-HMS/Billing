@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Pages\ListPayments;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Pages\ViewPayment;
 use Modules\Billing\Models\Payment;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
@@ -86,6 +87,14 @@ class PaymentResource extends Resource
     {
         return [
             'index' => ListPayments::route('/'),
+            'view' => ViewPayment::route('/{record}'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            \Modules\Billing\Filament\Clusters\Billing\Resources\Payments\RelationManagers\PaymentAllocationsRelationManager::class,
         ];
     }
 
