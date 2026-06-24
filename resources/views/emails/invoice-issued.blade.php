@@ -9,6 +9,9 @@
 <p>{{ __('MRN') }}: {{ $invoice->patient->mrn }}</p>
 @endif
 <p><a href="{{ $pdfUrl }}">{{ __('View invoice PDF') }}</a></p>
+@if($checkoutUrl ?? false)
+<p><a href="{{ $checkoutUrl }}" style="display: inline-block; padding: 10px 20px; background-color: #10b981; color: #fff; text-decoration: none; border-radius: 6px;">{{ __('Pay now') }}</a></p>
+@endif
 <p>{{ config('app.name') }}</p>
 </body>
 </html>

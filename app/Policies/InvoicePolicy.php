@@ -3,6 +3,7 @@
 namespace Modules\Billing\Policies;
 
 use App\Models\User;
+use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Models\Invoice;
 
 class InvoicePolicy
@@ -57,6 +58,19 @@ class InvoicePolicy
         }
 
         if (! $invoice->isDraft()) {
+            return false;
+        }
+
+        return $this->sameBranch($user, $invoice);
+    }
+
+    public function void(User $user, Invoice $invoice): bool
+    {
+        if (! $user->can('Update Invoice')) {
+            return false;
+        }
+
+        if (in_array($invoice->status, [InvoiceStatus::Draft, InvoiceStatus::Void, InvoiceStatus::Paid, InvoiceStatus::PartiallyPaid], true)) {
             return false;
         }
 

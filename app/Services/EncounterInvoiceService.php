@@ -19,18 +19,25 @@ class EncounterInvoiceService
 
     public function ensureDraftInvoiceForEncounter(Encounter $encounter): Invoice
     {
-        $encounter->loadMissing('branch');
-
-        $existing = Invoice::query()->withoutGlobalScopes()
-            ->where('encounter_id', $encounter->id)
-            ->where('status', InvoiceStatus::Draft)
-            ->first();
-
-        if ($existing) {
-            return $existing;
-        }
-
         return DB::transaction(function () use ($encounter) {
+            $encounter->loadMissing('branch');
+
+            // Lock encounter row to serialize concurrent requests
+            Encounter::query()->withoutGlobalScopes()
+                ->where('id', $encounter->id)
+                ->lockForUpdate()
+                ->first();
+
+            // Re-check for existing draft after acquiring lock
+            $existing = Invoice::query()->withoutGlobalScopes()
+                ->where('encounter_id', $encounter->id)
+                ->where('status', InvoiceStatus::Draft)
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
             $organizationId = $encounter->branch?->organization_id;
 
             Context::add('current_branch_id', $encounter->branch_id);
