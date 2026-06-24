@@ -10,10 +10,11 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Auth;
+use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\PaymentPlanResource;
 use Modules\Billing\Models\PaymentPlan;
+use Modules\Billing\Models\PaymentPlanInstallment;
 use Modules\Billing\Services\PaymentPlanService;
 use Modules\Core\Filament\Infolists\Components\CurrencyEntry;
 
@@ -58,8 +59,8 @@ class ViewPaymentPlan extends ViewRecord
                         ->required(),
                     Select::make('method')
                         ->label(__('Payment method'))
-                        ->options(\Modules\Billing\Enums\PaymentMethod::class)
-                        ->default(\Modules\Billing\Enums\PaymentMethod::Cash->value)
+                        ->options(PaymentMethod::class)
+                        ->default(PaymentMethod::Cash->value)
                         ->required(),
                     TextInput::make('reference')
                         ->label(__('Reference'))
@@ -67,9 +68,10 @@ class ViewPaymentPlan extends ViewRecord
                         ->nullable(),
                 ])
                 ->action(function (array $data, PaymentPlanService $service): void {
-                    $installment = \Modules\Billing\Models\PaymentPlanInstallment::find($data['installment_id']);
+                    $installment = PaymentPlanInstallment::find($data['installment_id']);
                     if (! $installment) {
                         Notification::make()->danger()->title(__('Installment not found.'))->send();
+
                         return;
                     }
 
@@ -77,7 +79,7 @@ class ViewPaymentPlan extends ViewRecord
                         plan: $this->getRecord(),
                         installment: $installment,
                         amount: (string) $data['amount'],
-                        method: \Modules\Billing\Enums\PaymentMethod::tryFrom($data['method'] ?? 'cash') ?? \Modules\Billing\Enums\PaymentMethod::Cash,
+                        method: PaymentMethod::tryFrom($data['method'] ?? 'cash') ?? PaymentMethod::Cash,
                         gateway: $data['method'] ?? 'cash',
                         reference: $data['reference'] ?? null,
                     );

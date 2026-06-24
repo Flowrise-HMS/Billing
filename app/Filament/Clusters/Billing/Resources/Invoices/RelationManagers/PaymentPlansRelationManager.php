@@ -2,6 +2,8 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\RelationManagers;
 
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -10,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Billing\Enums\PaymentPlanStatus;
+use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\PaymentPlanResource;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Services\PaymentPlanService;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
@@ -41,7 +44,7 @@ class PaymentPlansRelationManager extends RelationManager
                 TextColumn::make('created_at')->dateTime(),
             ])
             ->headerActions([
-                \Filament\Actions\CreateAction::make('createPlan')
+                CreateAction::make('createPlan')
                     ->label(__('Create payment plan'))
                     ->icon('heroicon-o-plus')
                     ->form([
@@ -98,10 +101,10 @@ class PaymentPlansRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
-                \Filament\Actions\Action::make('view')
+                Action::make('view')
                     ->label(__('View'))
                     ->icon('heroicon-o-eye')
-                    ->url(fn ($record) => \Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\PaymentPlanResource::getUrl('view', ['record' => $record])),
+                    ->url(fn ($record) => PaymentPlanResource::getUrl('view', ['record' => $record])),
             ])
             ->defaultSort('created_at', 'desc');
     }

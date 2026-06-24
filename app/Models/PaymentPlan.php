@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Billing\Enums\PaymentPlanStatus;
+use Modules\Core\Models\User;
 
 class PaymentPlan extends Model
 {
@@ -48,7 +49,7 @@ class PaymentPlan extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Core\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function remainingBalance(): string

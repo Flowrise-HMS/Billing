@@ -4,10 +4,9 @@ namespace Modules\Billing\Services;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentPlanInstallmentStatus;
 use Modules\Billing\Enums\PaymentPlanStatus;
-use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\PaymentPlan;
 use Modules\Billing\Models\PaymentPlanInstallment;

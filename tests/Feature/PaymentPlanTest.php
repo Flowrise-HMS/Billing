@@ -8,10 +8,10 @@ use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Enums\PaymentMethod;
+use Modules\Billing\Enums\PaymentPlanInstallmentStatus;
 use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
-use Modules\Billing\Models\PaymentPlan;
 use Modules\Billing\Services\InvoiceIssuanceService;
 use Modules\Billing\Services\PaymentPlanService;
 use Modules\Core\Database\Factories\BranchFactory;
@@ -140,7 +140,7 @@ class PaymentPlanTest extends TestCase
 
             $installment->refresh();
             $this->assertTrue($installment->isFullyPaid());
-            $this->assertSame(\Modules\Billing\Enums\PaymentPlanInstallmentStatus::Paid, $installment->status);
+            $this->assertSame(PaymentPlanInstallmentStatus::Paid, $installment->status);
             $this->assertNotNull($installment->paid_at);
         });
     }
