@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\PaymentMethod;
+use Modules\Billing\Enums\PaymentType;
 use Modules\Billing\Events\InvoiceBecameFullyPaid;
 use Modules\Billing\Events\InvoiceBecamePartiallyPaid;
 use Modules\Billing\Events\InvoiceTotalsUpdated;
@@ -35,7 +36,8 @@ class PaymentRecordingService
         string $branchId,
         ?int $recordedBy,
         ?string $providerTransactionId = null,
-        array $metadata = []
+        array $metadata = [],
+        ?PaymentType $type = null
     ): Payment {
         if ($allocations === []) {
             throw new InvalidArgumentException('Payment requires at least one allocation.');
@@ -48,7 +50,7 @@ class PaymentRecordingService
             $totalAmount = bcadd($totalAmount, (string) $amount, 2);
         }
 
-        return DB::transaction(function () use ($allocations, $method, $gateway, $currency, $patientId, $branchId, $recordedBy, $providerTransactionId, $metadata, $totalAmount) {
+        return DB::transaction(function () use ($allocations, $method, $gateway, $currency, $patientId, $branchId, $recordedBy, $providerTransactionId, $metadata, $totalAmount, $type) {
             $lineIds = array_keys($allocations);
             sort($lineIds);
 
@@ -95,6 +97,7 @@ class PaymentRecordingService
                 'branch_id' => $branchId,
                 'method' => $method,
                 'gateway' => $gateway,
+                'type' => $type ?? PaymentType::Payment,
                 'amount' => $totalAmount,
                 'currency' => $currency,
                 'provider_transaction_id' => $providerTransactionId,
@@ -106,9 +109,16 @@ class PaymentRecordingService
             foreach ($allocations as $lineId => $amount) {
                 $line = $lines->get($lineId);
 
-                $remaining = bcsub((string) $line->line_total, (string) $line->amount_paid, 2);
-                if (bccomp((string) $amount, $remaining, 2) > 0) {
-                    throw new InvalidArgumentException("Allocation exceeds remaining for line {$lineId}.");
+                if (bccomp((string) $amount, '0', 2) > 0) {
+                    $remaining = bcsub((string) $line->line_total, (string) $line->amount_paid, 2);
+                    if (bccomp((string) $amount, $remaining, 2) > 0) {
+                        throw new InvalidArgumentException("Allocation exceeds remaining for line {$lineId}.");
+                    }
+                } elseif (bccomp((string) $amount, '0', 2) < 0) {
+                    $refundMax = bcsub('0', (string) $line->amount_paid, 2);
+                    if (bccomp((string) $amount, $refundMax, 2) < 0) {
+                        throw new InvalidArgumentException("Refund exceeds paid amount for line {$lineId}.");
+                    }
                 }
 
                 PaymentAllocation::query()->create([

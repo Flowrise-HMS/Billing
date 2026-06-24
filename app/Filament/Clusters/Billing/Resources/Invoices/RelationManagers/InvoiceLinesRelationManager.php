@@ -18,6 +18,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
+use Modules\Billing\Filament\Actions\WriteOffLinesAction;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 use Modules\Core\Models\Unit;
 
@@ -133,6 +134,8 @@ class InvoiceLinesRelationManager extends RelationManager
                         'lines' => $record->id,
                     ]))
                     ->openUrlInNewTab(),
+                WriteOffLinesAction::make()
+                    ->mountUsing(fn (Action $action, $record) => $action->arguments(['line_id' => $record?->id])),
             ]);
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Billing\Enums\PaymentMethod;
+use Modules\Billing\Enums\PaymentType;
 use Modules\Core\Models\Branch;
 use Modules\Patient\Models\Patient;
 
@@ -22,6 +23,7 @@ class Payment extends Model
         'branch_id',
         'method',
         'gateway',
+        'type',
         'amount',
         'currency',
         'provider_transaction_id',
@@ -32,6 +34,7 @@ class Payment extends Model
 
     protected $casts = [
         'method' => PaymentMethod::class,
+        'type' => PaymentType::class,
         'amount' => 'decimal:2',
         'received_at' => 'datetime',
         'metadata' => 'array',
