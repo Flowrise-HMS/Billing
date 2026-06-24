@@ -12,7 +12,12 @@
                     <x-slot name="heading">
                         <div class="flex items-center justify-between">
                             <span>{{ $selectedInvoice['invoice_number'] }}</span>
-                            <x-filament::badge>{{ $selectedInvoice['status_label'] }}</x-filament::badge>
+                            <div class="flex items-center gap-2">
+                                @if ($selectedInvoice['is_overdue'])
+                                    <x-filament::badge color="danger">{{ __('Overdue') }}</x-filament::badge>
+                                @endif
+                                <x-filament::badge>{{ $selectedInvoice['status_label'] }}</x-filament::badge>
+                            </div>
                         </div>
                     </x-slot>
 
@@ -44,61 +49,57 @@
 
                 <x-filament::section>
                     <x-slot name="heading">{{ __('Line items') }}</x-slot>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-left border-b">
-                                    <th class="py-2 pr-4">{{ __('Item') }}</th>
-                                    <th class="py-2 pr-4">{{ __('Qty') }}</th>
-                                    <th class="py-2 pr-4 text-right">{{ __('Total') }}</th>
-                                    <th class="py-2 pr-4 text-right">{{ __('Paid') }}</th>
-                                    <th class="py-2 text-right">{{ __('Balance') }}</th>
-                                    <th class="py-2 text-right">{{ __('Actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($selectedInvoice['lines'] as $line)
-                                    @php
-                                        $lineBalance = max(0, (float) ($line['line_total'] ?? 0) - (float) ($line['amount_paid'] ?? 0));
-                                    @endphp
-                                    <tr class="border-b">
-                                        <td class="py-2 pr-4">{{ $line['description'] }}</td>
-                                        <td class="py-2 pr-4">{{ $line['quantity'] }}</td>
-                                        <td class="py-2 pr-4 text-right">{{ number_format((float) ($line['line_total'] ?? 0), 2) }}</td>
-                                        <td class="py-2 pr-4 text-right">{{ number_format((float) ($line['amount_paid'] ?? 0), 2) }}</td>
-                                        <td class="py-2 text-right font-medium {{ $lineBalance > 0 ? 'text-danger-600' : 'text-success-600' }}">
-                                            {{ number_format($lineBalance, 2) }}
-                                        </td>
-                                        <td class="py-2 pl-2 text-right whitespace-nowrap">
-                                            @if ( isset($line['latest_payment_id']) && ! empty($line['latest_payment_id']))
-                                                <x-filament::button
-                                                    tag="a"
-                                                    href="{{ route('billing.payments.receipt', $line['latest_payment_id']) }}?line_id={{ $line['id'] }}"
-                                                    target="_blank"
-                                                    color="gray"
-                                                    size="xs"
-                                                    icon="heroicon-m-printer"
-                                                >
-                                                    {{ __('Print receipt') }}
-                                                </x-filament::button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="6" class="py-4 text-center text-gray-500">{{ __('No line items.') }}</td></tr>
-                                @endforelse
-                            </tbody>
-                            <tfoot>
-                                <tr class="font-semibold">
-                                    <td colspan="2" class="py-2 pr-4">{{ __('Totals') }}</td>
-                                    <td class="py-2 pr-4 text-right">{{ number_format((float) $selectedInvoice['total'], 2) }}</td>
-                                    <td class="py-2 pr-4 text-right">{{ number_format((float) $selectedInvoice['amount_paid'], 2) }}</td>
-                                    <td class="py-2 text-right text-danger-600">{{ number_format((float) $selectedInvoice['balance_due'], 2) }}</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                    {{ $this->getLineItemsTable() }}
+
+                    @if ($selectedInvoice['payment_plan'])
+                        <x-filament::section class="mt-4">
+                            <x-slot name="heading">
+                                <div class="flex items-center justify-between">
+                                    <span>{{ __('Payment plan') }}</span>
+                                    <x-filament::badge color="info">{{ __(':count installments', ['count' => $selectedInvoice['payment_plan']['installment_count']]) }}</x-filament::badge>
+                                </div>
+                            </x-slot>
+                            <div class="overflow-x-auto">
+                                <table class="fi-ta-table w-full">
+                                    <thead>
+                                        <tr class="fi-ta-table-header-row">
+                                            <th class="fi-ta-table-header-cell px-3 py-3.5 text-sm font-semibold text-left">{{ '#' }}</th>
+                                            <th class="fi-ta-table-header-cell px-3 py-3.5 text-sm font-semibold text-left">{{ __('Due date') }}</th>
+                                            <th class="fi-ta-table-header-cell px-3 py-3.5 text-sm font-semibold text-right">{{ __('Amount') }}</th>
+                                            <th class="fi-ta-table-header-cell px-3 py-3.5 text-sm font-semibold text-right">{{ __('Paid') }}</th>
+                                            <th class="fi-ta-table-header-cell px-3 py-3.5 text-sm font-semibold text-center">{{ __('Status') }}</th>
+                                            <th class="fi-ta-table-header-cell px-3 py-3.5 text-sm font-semibold text-right">{{ __('Actions') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($selectedInvoice['payment_plan']['installments'] as $inst)
+                                            <tr class="fi-ta-table-row border-b">
+                                                <td class="fi-ta-table-cell px-3 py-2">{{ $inst['number'] }}</td>
+                                                <td class="fi-ta-table-cell px-3 py-2">{{ $inst['due_date'] }}</td>
+                                                <td class="fi-ta-table-cell px-3 py-2 text-right">{{ number_format((float) $inst['amount'], 2) }}</td>
+                                                <td class="fi-ta-table-cell px-3 py-2 text-right">{{ number_format((float) $inst['paid_amount'], 2) }}</td>
+                                                <td class="fi-ta-table-cell px-3 py-2 text-center">
+                                                    <x-filament::badge color="{{ $inst['status_color'] }}">{{ $inst['status'] }}</x-filament::badge>
+                                                </td>
+                                                <td class="fi-ta-table-cell px-3 py-2 text-right">
+                                                    @if (! $inst['is_paid'])
+                                                        <x-filament::button
+                                                            wire:click="mountAction('collectInstallment', { installment_id: '{{ $inst['id'] }}' })"
+                                                            color="success"
+                                                            size="xs"
+                                                            icon="heroicon-m-currency-dollar"
+                                                        >
+                                                            {{ __('Collect') }}
+                                                        </x-filament::button>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </x-filament::section>
+                    @endif
 
                     <div class="mt-4 flex justify-end gap-3">
                         <x-filament::button

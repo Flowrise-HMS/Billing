@@ -138,6 +138,11 @@ class Invoice extends BaseModel
         return $this->hasMany(PaymentIntent::class);
     }
 
+    public function paymentPlan(): HasMany
+    {
+        return $this->hasMany(PaymentPlan::class);
+    }
+
     public function balanceDue(): string
     {
         return bcsub((string) $this->total, (string) $this->amount_paid, 2);

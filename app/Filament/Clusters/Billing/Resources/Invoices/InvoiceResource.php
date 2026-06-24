@@ -15,6 +15,7 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\ListInvoi
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\ListInvoices;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\ViewInvoice;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\RelationManagers\InvoiceLinesRelationManager;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\RelationManagers\PaymentPlansRelationManager;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Schemas\InvoiceForm;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Schemas\InvoiceInfolist;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
@@ -49,6 +50,7 @@ class InvoiceResource extends Resource
     {
         return [
             InvoiceLinesRelationManager::class,
+            PaymentPlansRelationManager::class,
         ];
     }
 

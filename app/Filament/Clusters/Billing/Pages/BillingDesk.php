@@ -5,9 +5,12 @@ namespace Modules\Billing\Filament\Clusters\Billing\Pages;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\FiltersLayout;
@@ -18,9 +21,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
+use Modules\Billing\Enums\PaymentMethod;
+use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
 use Modules\Billing\Models\Invoice;
+use Modules\Billing\Models\InvoiceLine;
+use Modules\Billing\Models\PaymentAllocation;
+use Modules\Billing\Models\PaymentPlanInstallment;
+use Modules\Billing\Services\PaymentPlanService;
 use Modules\Core\Classes\Services\BranchService;
 use Modules\Core\Settings\FeatureSettings;
 
@@ -54,8 +63,12 @@ class BillingDesk extends Page implements HasTable
             return;
         }
 
-        $invoice = Invoice::with(['lines' => fn ($q) => $q->orderBy('id')->with('paymentAllocations.payment'), 'patient'])
-            ->find($this->selectedInvoiceId);
+        $invoice = Invoice::with([
+            'lines' => fn ($q) => $q->orderBy('id')->with('paymentAllocations.payment'),
+            'patient',
+            'paymentPlan' => fn ($q) => $q->where('status', PaymentPlanStatus::Active)
+                ->with('installments'),
+        ])->find($this->selectedInvoiceId);
 
         if (! $invoice) {
             $this->selectedInvoice = null;
@@ -63,11 +76,14 @@ class BillingDesk extends Page implements HasTable
             return;
         }
 
+        $activePlan = $invoice->paymentPlan->first();
+
         $this->selectedInvoice = [
             'id' => $invoice->id,
             'invoice_number' => $invoice->invoice_number,
             'status' => $invoice->status->value,
             'status_label' => $invoice->status->getLabel(),
+            'is_overdue' => $invoice->isOverdue(),
             'total' => $invoice->total,
             'amount_paid' => $invoice->amount_paid,
             'balance_due' => $invoice->balanceDue(),
@@ -84,6 +100,26 @@ class BillingDesk extends Page implements HasTable
                 ]))
                 ->values()
                 ->toArray(),
+            'payment_plan' => $activePlan ? [
+                'id' => $activePlan->id,
+                'total_amount' => (string) $activePlan->total_amount,
+                'installment_count' => $activePlan->installment_count,
+                'installments' => $activePlan->installments
+                    ->sortBy('installment_number')
+                    ->map(fn ($i) => [
+                        'id' => $i->id,
+                        'number' => $i->installment_number,
+                        'amount' => (string) $i->amount,
+                        'paid_amount' => (string) $i->paid_amount,
+                        'remaining' => $i->remainingAmount(),
+                        'due_date' => $i->due_date->format('Y-m-d'),
+                        'status' => $i->status->getLabel(),
+                        'status_color' => $i->status->getColor(),
+                        'is_paid' => $i->isFullyPaid(),
+                    ])
+                    ->values()
+                    ->toArray(),
+            ] : null,
         ];
     }
 
@@ -187,6 +223,71 @@ class BillingDesk extends Page implements HasTable
             ->searchable();
     }
 
+    public function getLineItemsTable(): Table
+    {
+        if (! $this->selectedInvoice) {
+            return Table::make($this)
+                ->query(InvoiceLine::whereRaw('0 = 1'))
+                ->paginated(false);
+        }
+
+        $lineIds = collect($this->selectedInvoice['lines'])->pluck('id')->toArray();
+        $currency = $this->selectedInvoice['currency'] ?? 'GHS';
+
+        return Table::make($this)
+            ->query(
+                InvoiceLine::whereIn('id', $lineIds)
+                    ->with('paymentAllocations.payment')
+                    ->orderBy('id')
+            )
+            ->columns([
+                TextColumn::make('description')
+                    ->label(__('Item')),
+                TextColumn::make('quantity')
+                    ->label(__('Qty')),
+                TextColumn::make('line_total')
+                    ->label(__('Total'))
+                    ->money($currency)
+                    ->alignEnd(),
+                TextColumn::make('amount_paid')
+                    ->label(__('Paid'))
+                    ->money($currency)
+                    ->alignEnd(),
+                TextColumn::make('balance')
+                    ->label(__('Balance'))
+                    ->alignEnd()
+                    ->getStateUsing(fn (InvoiceLine $record): string => $record->remainingAmount())
+                    ->formatStateUsing(fn (string $state): string => number_format((float) $state, 2))
+                    ->color(fn (string $state): string => (float) $state > 0 ? 'danger' : 'success'),
+            ])
+            ->actions([
+                Action::make('print_receipt')
+                    ->label(__('Print receipt'))
+                    ->icon('heroicon-m-printer')
+                    ->color('gray')
+                    ->url(fn (InvoiceLine $record): string => $this->getLatestPaymentUrl($record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (InvoiceLine $record): bool => $this->getLatestPaymentId($record) !== null),
+            ])
+            ->paginated(false)
+            ->selectable(false)
+            ->searchable(false);
+    }
+
+    private function getLatestPaymentId(InvoiceLine $record): ?string
+    {
+        return $record->paymentAllocations
+            ->sortByDesc(fn (PaymentAllocation $pa) => $pa->payment?->created_at)
+            ->first()?->payment_id;
+    }
+
+    private function getLatestPaymentUrl(InvoiceLine $record): string
+    {
+        $paymentId = $this->getLatestPaymentId($record);
+
+        return route('billing.payments.receipt', $paymentId).'?line_id='.$record->id;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -194,6 +295,93 @@ class BillingDesk extends Page implements HasTable
                 ->visible(fn (): bool => $this->selectedInvoice !== null
                     && ! in_array($this->selectedInvoice['status'], [InvoiceStatus::Void->value], true)
                     && (float) $this->selectedInvoice['balance_due'] > 0),
+        ];
+    }
+
+    protected function getActions(): array
+    {
+        return [
+            Action::make('collectInstallment')
+                ->label(__('Collect installment'))
+                ->color('success')
+                ->icon('heroicon-o-currency-dollar')
+                ->form([
+                    Select::make('installment_id')
+                        ->label(__('Installment'))
+                        ->options(function (): array {
+                            $plan = $this->selectedInvoice['payment_plan'] ?? null;
+                            if (! $plan) {
+                                return [];
+                            }
+
+                            $options = [];
+                            foreach ($plan['installments'] as $inst) {
+                                if (! $inst['is_paid']) {
+                                    $options[$inst['id']] = __('#:num — Due: :date — :amount remaining', [
+                                        'num' => $inst['number'],
+                                        'date' => $inst['due_date'],
+                                        'amount' => number_format((float) $inst['remaining'], 2),
+                                    ]);
+                                }
+                            }
+
+                            return $options;
+                        })
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                            $plan = $this->selectedInvoice['payment_plan'] ?? null;
+                            if (! $plan) {
+                                return;
+                            }
+                            foreach ($plan['installments'] as $inst) {
+                                if ($inst['id'] === $state) {
+                                    $set('amount', (string) $inst['remaining']);
+                                    break;
+                                }
+                            }
+                        }),
+                    TextInput::make('amount')
+                        ->label(__('Amount'))
+                        ->numeric()
+                        ->minValue(0.01)
+                        ->required(),
+                    Select::make('method')
+                        ->label(__('Payment method'))
+                        ->options(PaymentMethod::class)
+                        ->default(PaymentMethod::Cash->value)
+                        ->required(),
+                    TextInput::make('reference')
+                        ->label(__('Reference'))
+                        ->maxLength(255)
+                        ->nullable(),
+                ])
+                ->action(function (array $data, PaymentPlanService $service): void {
+                    $installment = PaymentPlanInstallment::find($data['installment_id']);
+                    if (! $installment) {
+                        Notification::make()->danger()->title(__('Installment not found.'))->send();
+
+                        return;
+                    }
+
+                    $plan = $installment->paymentPlan;
+
+                    $service->recordInstallmentPayment(
+                        plan: $plan,
+                        installment: $installment,
+                        amount: (string) $data['amount'],
+                        method: PaymentMethod::tryFrom($data['method'] ?? 'cash') ?? PaymentMethod::Cash,
+                        gateway: $data['method'] ?? 'cash',
+                        reference: $data['reference'] ?? null,
+                    );
+
+                    Notification::make()
+                        ->success()
+                        ->title(__('Installment payment recorded'))
+                        ->send();
+
+                    $this->loadSelectedInvoice();
+                }),
         ];
     }
 

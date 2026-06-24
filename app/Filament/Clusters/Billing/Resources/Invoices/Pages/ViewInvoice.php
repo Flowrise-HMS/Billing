@@ -9,9 +9,11 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Modules\Billing\Enums\InvoiceStatus;
+use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Services\InvoiceIssuanceService;
+use Modules\Billing\Services\PaymentPlanService;
 
 class ViewInvoice extends ViewRecord
 {
@@ -53,8 +55,16 @@ class ViewInvoice extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading(__('Void invoice'))
                 ->modalDescription(__('Are you sure you want to void this invoice? This action cannot be undone.'))
-                ->action(function () use ($record) {
+                ->action(function (PaymentPlanService $planService) use ($record) {
                     $record->update(['status' => InvoiceStatus::Void]);
+
+                    $activePlan = $record->paymentPlan()
+                        ->where('status', PaymentPlanStatus::Active)
+                        ->first();
+                    if ($activePlan) {
+                        $planService->cancelPlan($activePlan);
+                    }
+
                     Notification::make()
                         ->success()
                         ->title(__('Invoice voided'))

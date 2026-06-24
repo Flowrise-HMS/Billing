@@ -5,14 +5,14 @@ namespace Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Modules\Billing\Enums\PaymentIntentStatus;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Pages\ListPaymentIntents;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Pages\ViewPaymentIntent;
+use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Tables\PaymentIntentsTable;
 use Modules\Billing\Models\PaymentIntent;
-use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class PaymentIntentResource extends Resource
 {
@@ -24,42 +24,26 @@ class PaymentIntentResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'client_reference';
 
+    public static function getModelLabel(): string
+    {
+        return __('Payment intent');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Payment intents');
+    }
+
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('invoice.invoice_number')
-                    ->label(__('Invoice'))
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('branch.name')
-                    ->label(__('Branch'))
-                    ->sortable(),
-                TextColumn::make('gateway')
-                    ->badge(),
-                TextColumn::make('status')
-                    ->badge()
-                    ->sortable(),
-                CurrencyColumn::make('amount')
-                    ->currency(fn (PaymentIntent $record): string => (string) $record->currency),
-                TextColumn::make('currency'),
-                TextColumn::make('client_reference')
-                    ->label('Ref')
-                    ->limit(12)
-                    ->copyable()
-                    ->tooltip(fn (PaymentIntent $r) => $r->client_reference),
-                TextColumn::make('provider_reference')
-                    ->label('Provider ref')
-                    ->limit(12)
-                    ->copyable(),
-                TextColumn::make('expires_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->defaultSort('created_at', 'desc');
+        return PaymentIntentsTable::configure($table);
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getEloquentQuery()
+            ->where('status', PaymentIntentStatus::Pending)
+            ->count();
     }
 
     public static function getPages(): array
