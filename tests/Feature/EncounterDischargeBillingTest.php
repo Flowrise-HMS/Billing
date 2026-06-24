@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Event;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
-use Modules\Billing\Events\UnpaidBillingNoticeRequired;
+use Modules\Billing\Events\InvoiceIssued;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Services\EncounterInvoiceService;
@@ -43,7 +43,7 @@ class EncounterDischargeBillingTest extends TestCase
             ->forPatient($patient)
             ->create(['status' => EncounterStatus::FINISHED]);
 
-        Event::fake([UnpaidBillingNoticeRequired::class]);
+        Event::fake([InvoiceIssued::class]);
 
         EncounterFinished::dispatch($encounter->fresh());
 
@@ -55,7 +55,7 @@ class EncounterDischargeBillingTest extends TestCase
         $this->assertSame(InvoiceStatus::Draft, $invoice->status);
         $this->assertSame('0.00', (string) $invoice->total);
 
-        Event::assertNotDispatched(UnpaidBillingNoticeRequired::class);
+        Event::assertNotDispatched(InvoiceIssued::class);
     }
 
     public function test_discharge_issues_invoice_when_total_is_positive(): void
@@ -91,7 +91,7 @@ class EncounterDischargeBillingTest extends TestCase
 
         app(InvoiceTotalsService::class)->recalculate($invoice->fresh(['lines']));
 
-        Event::fake([UnpaidBillingNoticeRequired::class]);
+        Event::fake([InvoiceIssued::class]);
 
         EncounterFinished::dispatch($encounter->fresh());
 
@@ -99,6 +99,6 @@ class EncounterDischargeBillingTest extends TestCase
         $this->assertSame(InvoiceStatus::Issued, $invoice->status);
         $this->assertNotNull($invoice->issued_at);
 
-        Event::assertDispatched(UnpaidBillingNoticeRequired::class);
+        Event::assertDispatched(InvoiceIssued::class);
     }
 }

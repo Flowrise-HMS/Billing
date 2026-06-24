@@ -23,6 +23,7 @@ use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentPlanStatus;
+use Modules\Billing\Filament\Actions\ApplyDepositAction;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
 use Modules\Billing\Models\Invoice;
@@ -295,6 +296,9 @@ class BillingDesk extends Page implements HasTable
                 ->visible(fn (): bool => $this->selectedInvoice !== null
                     && ! in_array($this->selectedInvoice['status'], [InvoiceStatus::Void->value], true)
                     && (float) $this->selectedInvoice['balance_due'] > 0),
+            ApplyDepositAction::make()
+                ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $this->selectedInvoiceId]))
+                ->visible(fn (): bool => $this->selectedInvoiceId !== null),
         ];
     }
 

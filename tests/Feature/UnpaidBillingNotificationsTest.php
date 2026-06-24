@@ -9,7 +9,7 @@ use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Events\UnpaidBillingNoticeRequired;
 use Modules\Billing\Models\Invoice;
-use Modules\Billing\Notifications\InvoiceIssuedNotification;
+use Modules\Billing\Notifications\InvoiceUnpaidNotification;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\EmergencyContactFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
@@ -71,7 +71,7 @@ class UnpaidBillingNotificationsTest extends TestCase
 
         event(new UnpaidBillingNoticeRequired($invoice));
 
-        Notification::assertSentTo($patient, InvoiceIssuedNotification::class);
-        Notification::assertSentTo($billingContact, InvoiceIssuedNotification::class);
+        Notification::assertSentTo($patient, InvoiceUnpaidNotification::class);
+        Notification::assertSentTo($billingContact, InvoiceUnpaidNotification::class);
     }
 }

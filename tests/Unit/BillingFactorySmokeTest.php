@@ -7,6 +7,7 @@ use Modules\Billing\Models\BillingWebhookEvent;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
+use Modules\Billing\Models\PatientDeposit;
 use Modules\Billing\Models\Payment;
 use Modules\Billing\Models\PaymentAllocation;
 use Modules\Billing\Models\PaymentIntent;
@@ -43,6 +44,13 @@ class BillingFactorySmokeTest extends TestCase
         $payment = Payment::factory()->create();
         $this->assertInstanceOf(Payment::class, $payment);
         $this->assertTrue($payment->exists);
+    }
+
+    public function test_patient_deposit_factory(): void
+    {
+        $deposit = PatientDeposit::factory()->create();
+        $this->assertInstanceOf(PatientDeposit::class, $deposit);
+        $this->assertTrue($deposit->exists);
     }
 
     public function test_payment_allocation_factory(): void

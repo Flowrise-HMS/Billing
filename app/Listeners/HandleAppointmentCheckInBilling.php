@@ -12,6 +12,7 @@ use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Services\InvoiceIssuanceService;
 use Modules\Billing\Services\InvoiceTotalsService;
+use Modules\Core\Support\AppSettings;
 
 class HandleAppointmentCheckInBilling
 {
@@ -22,6 +23,14 @@ class HandleAppointmentCheckInBilling
 
     public function handle(AppointmentCheckedIn $event): void
     {
+        try {
+            if (! app(AppSettings::class)->billing()->auto_invoice_on_checkin) {
+                return;
+            }
+        } catch (\Throwable) {
+            return;
+        }
+
         $appointment = Appointment::query()
             ->with('service', 'branch')
             ->find($event->appointmentId);

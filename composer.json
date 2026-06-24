@@ -9,6 +9,7 @@
         "flowrise-hms/patient": "dev-main",
         "barryvdh/laravel-dompdf": "^3.1",
         "flowrise-hms/appointment": "dev-main",
+        "musheabdulhakim/paystack": "^2.0",
         "stripe/stripe-php": "^17.0"
     },
     "extra": {

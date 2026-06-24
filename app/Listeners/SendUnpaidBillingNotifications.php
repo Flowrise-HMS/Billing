@@ -4,7 +4,7 @@ namespace Modules\Billing\Listeners;
 
 use Illuminate\Support\Facades\Notification;
 use Modules\Billing\Events\UnpaidBillingNoticeRequired;
-use Modules\Billing\Notifications\InvoiceIssuedNotification;
+use Modules\Billing\Notifications\InvoiceUnpaidNotification;
 use Modules\Billing\Support\BillingNotificationRecipients;
 
 class SendUnpaidBillingNotifications
@@ -20,6 +20,6 @@ class SendUnpaidBillingNotifications
 
         $recipients = BillingNotificationRecipients::forUnpaidInvoiceNotice($patient);
 
-        Notification::send($recipients, new InvoiceIssuedNotification($invoice));
+        Notification::send($recipients, new InvoiceUnpaidNotification($invoice));
     }
 }

@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Event;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Events\InvoiceIssued;
 use Modules\Billing\Events\InvoiceTotalsUpdated;
-use Modules\Billing\Events\UnpaidBillingNoticeRequired;
 use Modules\Billing\Models\Invoice;
 
 class InvoiceIssuanceService
@@ -33,9 +32,6 @@ class InvoiceIssuanceService
                 $invoice = $invoice->fresh(['lines']);
                 Event::dispatch(new InvoiceIssued($invoice));
                 Event::dispatch(new InvoiceTotalsUpdated($invoice));
-                if (bccomp($invoice->balanceDue(), '0', 2) > 0) {
-                    Event::dispatch(new UnpaidBillingNoticeRequired($invoice));
-                }
             });
 
             return $invoice->fresh(['lines']);

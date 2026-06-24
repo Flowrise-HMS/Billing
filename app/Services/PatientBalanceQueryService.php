@@ -7,6 +7,10 @@ use Modules\Billing\Models\Invoice;
 
 class PatientBalanceQueryService
 {
+    public function __construct(
+        protected DepositBalanceService $depositBalanceService
+    ) {}
+
     public function openBalanceForPatient(string $patientId): string
     {
         $invoices = Invoice::query()->withoutGlobalScopes()
@@ -23,5 +27,10 @@ class PatientBalanceQueryService
         }
 
         return $sum;
+    }
+
+    public function depositBalanceForPatient(string $patientId): string
+    {
+        return $this->depositBalanceService->unallocatedBalanceForPatient($patientId);
     }
 }

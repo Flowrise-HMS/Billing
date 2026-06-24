@@ -4,18 +4,16 @@ namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\RelationM
 
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\PaymentPlanResource;
+use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\Schemas\PaymentPlanForm;
+use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\Tables\PaymentPlansTable;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Services\PaymentPlanService;
-use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class PaymentPlansRelationManager extends RelationManager
 {
@@ -32,45 +30,12 @@ class PaymentPlansRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('id')
-            ->columns([
-                CurrencyColumn::make('total_amount')
-                    ->currency(fn ($record) => $record->invoice?->currency ?? 'GHS'),
-                TextColumn::make('installment_count')->label(__('Installments')),
-                TextColumn::make('frequency_days')
-                    ->label(__('Frequency'))
-                    ->formatStateUsing(fn ($state) => __(':days days', ['days' => $state])),
-                TextColumn::make('status')->badge(),
-                TextColumn::make('start_date')->date(),
-                TextColumn::make('created_at')->dateTime(),
-            ])
+            ->columns(PaymentPlansTable::columns())
             ->headerActions([
                 CreateAction::make('createPlan')
                     ->label(__('Create payment plan'))
                     ->icon('heroicon-o-plus')
-                    ->form([
-                        TextInput::make('down_payment')
-                            ->label(__('Down payment'))
-                            ->numeric()
-                            ->default(0)
-                            ->minValue(0)
-                            ->required(),
-                        TextInput::make('installment_count')
-                            ->label(__('Number of installments'))
-                            ->numeric()
-                            ->default(3)
-                            ->minValue(1)
-                            ->required(),
-                        TextInput::make('frequency_days')
-                            ->label(__('Frequency (days)'))
-                            ->numeric()
-                            ->default(30)
-                            ->minValue(1)
-                            ->required(),
-                        Textarea::make('notes')
-                            ->label(__('Notes'))
-                            ->rows(2)
-                            ->nullable(),
-                    ])
+                    ->form(PaymentPlanForm::planFields())
                     ->action(function (array $data, RelationManager $livewire): void {
                         $invoice = $livewire->getOwnerRecord();
                         if (! $invoice instanceof Invoice) {

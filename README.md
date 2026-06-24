@@ -39,10 +39,12 @@ flowchart LR
 
 - Create and issue invoices with detailed invoice lines.
 - Record and allocate payments (full or partial).
+- Record patient **deposits** (prepaid credit) and **apply** them to issued invoices.
+- Create **payment plans** (installment schedules) on issued invoices and collect installments.
 - Generate receipts, invoice PDFs, and revenue exports.
 - Manage per-branch payment gateway settings.
 - Process payment webhooks and checkout session flows.
-- Trigger reminders/notifications for unpaid bills.
+- Trigger reminders/notifications for unpaid bills (scheduled overdue check with cooldown).
 
 ## How it works (simple)
 
@@ -56,11 +58,11 @@ flowchart LR
 
 | Path | Purpose |
 |------|---------|
-| `app/Models/` | Invoice, invoice line, payment, payment intent/allocation, webhook events. |
+| `app/Models/` | Invoice, invoice line, payment, patient deposit, payment intent/allocation, webhook events. |
 | `app/Services/` | Totals, issuance, checkout, recording, balance, receipts, reporting. |
-| `app/Gateways/` | Payment gateway manager plus provider drivers (Paystack/Stripe/Flutterwave/Hubtel). |
+| `app/Gateways/` | Payment gateway manager plus provider drivers (Paystack via [musheabdulhakim/paystack](https://musheabdulhakim.github.io/Paystack/), Stripe, Flutterwave, Hubtel). |
 | `app/Events/` + `app/Listeners/` | Lifecycle events and sync/finalization listeners. |
-| `app/Filament/` | Billing plugin, cluster, and relation managers. |
+| `app/Filament/` | Billing cluster, resources (`Schemas/`, `Tables/`, thin `Pages/`), relation managers, shared action forms. |
 | `app/Http/Controllers/` | API/web endpoints for checkout, payment status, webhooks, exports, PDFs. |
 | `app/Notifications/` + `app/Mail/` | Patient-facing billing notices and mail templates. |
 
@@ -83,6 +85,27 @@ Current rollout: [module status](../../docs/shared/module-status.md).
 - **Namespace:** `Modules\Billing\...`
 - **Service provider:** `Modules\Billing\Providers\BillingServiceProvider`
 - Billing is already event-driven in several places (invoice line sync, encounter finalization, unpaid notices). Extend through events/listeners before adding hard controller coupling.
+
+### Filament resource layout
+
+Billing Filament resources follow the same schema pattern as **Invoices** — thin resources and pages, shared schema classes:
+
+```text
+Resources/{Resource}/
+  Schemas/{Resource}Form.php      → form() via configure()
+  Schemas/{Resource}Infolist.php  → infolist() via configure() (where applicable)
+  Tables/{Resource}Table.php      → table() via configure(); expose columns() for relation managers
+  {Resource}Resource.php          → delegates form/infolist/table only
+  Pages/                          → mutations and header actions only (no inline schemas)
+```
+
+**Examples:** `Invoices/`, `PaymentPlans/`, `Payments/` (list + view; payments are recorded via actions, not create pages).
+
+**Relation managers** reuse partial schema APIs — e.g. `PaymentPlanForm::planFields()` and `PaymentPlansTable::columns()` on the invoice **Payment plans** tab.
+
+**Modal actions** (deposits, desk payments) use shared forms under `app/Filament/Schemas/` — e.g. `RecordDepositForm`, `ApplyDepositForm` — consumed by `RecordDepositAction` and `ApplyDepositAction`.
+
+**Services (do not bypass in pages):** `PaymentPlanService` (create/collect/cancel plans), `DepositRecordingService`, `DepositApplicationService`, `PaymentRecordingService`.
 
 ## Useful commands
 

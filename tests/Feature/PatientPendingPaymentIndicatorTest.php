@@ -9,6 +9,8 @@ use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
+use Modules\Billing\Enums\PaymentMethod;
+use Modules\Billing\Services\DepositRecordingService;
 use Modules\Billing\Services\PatientBalanceQueryService;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
@@ -67,5 +69,28 @@ class PatientPendingPaymentIndicatorTest extends TestCase
         $balance = app(PatientBalanceQueryService::class)->openBalanceForPatient($patient->id);
 
         $this->assertSame('150.00', $balance);
+    }
+
+    public function test_deposit_balance_for_patient_reflects_unallocated_credit(): void
+    {
+        $branch = BranchFactory::new()->create();
+        Context::add('current_branch_id', $branch->id);
+
+        $patient = Patient::withoutEvents(
+            fn () => PatientFactory::new()->create(['branch_id' => $branch->id])
+        );
+
+        app(DepositRecordingService::class)->record(
+            patientId: $patient->id,
+            branchId: (string) $branch->id,
+            amount: '80.00',
+            method: PaymentMethod::Cash,
+        );
+
+        $depositBalance = app(PatientBalanceQueryService::class)->depositBalanceForPatient($patient->id);
+        $openBalance = app(PatientBalanceQueryService::class)->openBalanceForPatient($patient->id);
+
+        $this->assertSame('80.00', $depositBalance);
+        $this->assertSame('0', $openBalance);
     }
 }

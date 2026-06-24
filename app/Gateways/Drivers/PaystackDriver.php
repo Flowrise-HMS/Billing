@@ -3,14 +3,19 @@
 namespace Modules\Billing\Gateways\Drivers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Modules\Billing\Enums\PaymentIntentStatus;
 use Modules\Billing\Gateways\Contracts\PaymentGatewayDriver;
+use Modules\Billing\Gateways\Paystack\PaystackClientFactory;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\PaymentIntent;
+use Throwable;
 
 class PaystackDriver implements PaymentGatewayDriver
 {
+    public function __construct(
+        protected PaystackClientFactory $clientFactory
+    ) {}
+
     public function key(): string
     {
         return 'paystack';
@@ -21,9 +26,8 @@ class PaystackDriver implements PaymentGatewayDriver
         $secret = $config->secret_key;
         $email = $intent->metadata['customer_email'] ?? 'billing@example.com';
 
-        $response = Http::withToken($secret)
-            ->acceptJson()
-            ->post('https://api.paystack.co/transaction/initialize', [
+        try {
+            $data = $this->clientFactory->make($secret)->transaction()->initialize([
                 'email' => $email,
                 'amount' => (int) bcmul((string) $intent->amount, '100', 0),
                 'currency' => strtoupper($intent->currency),
@@ -34,21 +38,28 @@ class PaystackDriver implements PaymentGatewayDriver
                     'payment_intent_id' => $intent->id,
                 ],
             ]);
-
-        $json = $response->json();
-        if (! $response->successful() || empty($json['data']['authorization_url'])) {
+        } catch (Throwable $e) {
             $intent->update([
                 'status' => PaymentIntentStatus::Failed,
-                'raw_response' => $json,
+                'raw_response' => ['error' => $e->getMessage()],
+            ]);
+
+            return $intent->fresh();
+        }
+
+        if (! is_array($data) || empty($data['authorization_url'])) {
+            $intent->update([
+                'status' => PaymentIntentStatus::Failed,
+                'raw_response' => is_array($data) ? $data : ['response' => $data],
             ]);
 
             return $intent->fresh();
         }
 
         $intent->update([
-            'checkout_url' => $json['data']['authorization_url'],
-            'provider_reference' => $json['data']['access_code'] ?? null,
-            'raw_response' => $json,
+            'checkout_url' => $data['authorization_url'],
+            'provider_reference' => $data['access_code'] ?? null,
+            'raw_response' => $data,
         ]);
 
         return $intent->fresh();

@@ -4,9 +4,9 @@ namespace Modules\Billing\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Event;
-use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Events\UnpaidBillingNoticeRequired;
 use Modules\Billing\Models\Invoice;
+use Modules\Core\Support\AppSettings;
 
 class FlagOverdueInvoices extends Command
 {
@@ -17,11 +17,23 @@ class FlagOverdueInvoices extends Command
 
     public function handle(): int
     {
+        $cooldownDays = 7;
+
+        try {
+            $cooldownDays = app(AppSettings::class)->billing()->overdue_reminder_cooldown_days;
+        } catch (\Throwable) {
+            // use default
+        }
+
+        $cooldownCutoff = now()->subDays($cooldownDays);
+
         $overdue = Invoice::query()
             ->withoutGlobalScopes()
-            ->whereNotNull('due_at')
-            ->where('due_at', '<', now())
-            ->whereIn('status', [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid])
+            ->overdue()
+            ->where(function ($q) use ($cooldownCutoff) {
+                $q->whereNull('last_unpaid_reminder_at')
+                    ->orWhere('last_unpaid_reminder_at', '<=', $cooldownCutoff);
+            })
             ->get();
 
         if ($overdue->isEmpty()) {
@@ -43,6 +55,7 @@ class FlagOverdueInvoices extends Command
 
             if (! $this->option('dry-run')) {
                 Event::dispatch(new UnpaidBillingNoticeRequired($invoice));
+                $invoice->update(['last_unpaid_reminder_at' => now()]);
             }
         }
 

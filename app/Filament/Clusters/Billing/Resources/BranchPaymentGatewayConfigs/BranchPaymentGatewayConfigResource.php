@@ -38,6 +38,7 @@ class BranchPaymentGatewayConfigResource extends Resource
         return $schema->components([
             Section::make(__('Gateway'))
                 ->columnSpanFull()
+                ->columns(2)
                 ->schema([
                     Select::make('branch_id')
                         ->relationship('branch', 'name')

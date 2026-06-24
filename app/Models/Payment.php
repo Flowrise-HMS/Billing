@@ -54,4 +54,9 @@ class Payment extends Model
     {
         return $this->hasMany(PaymentAllocation::class);
     }
+
+    public function patientDeposit(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PatientDeposit::class);
+    }
 }
