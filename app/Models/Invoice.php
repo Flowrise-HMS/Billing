@@ -2,8 +2,10 @@
 
 namespace Modules\Billing\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
@@ -145,5 +147,23 @@ class Invoice extends BaseModel
     public function isDraft(): bool
     {
         return $this->status === InvoiceStatus::Draft;
+    }
+
+    public function isOverdue(): bool
+    {
+        if (! $this->due_at) {
+            return false;
+        }
+
+        return in_array($this->status, [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid], true)
+            && $this->due_at->isPast();
+    }
+
+    public function scopeOverdue(Builder $query): Builder
+    {
+        return $query
+            ->whereNotNull('due_at')
+            ->where('due_at', '<', now())
+            ->whereIn('status', [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid]);
     }
 }

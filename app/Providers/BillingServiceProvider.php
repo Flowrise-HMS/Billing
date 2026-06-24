@@ -11,6 +11,7 @@ use Modules\Billing\Observers\InvoiceLineObserver;
 use Modules\Billing\Policies\BranchPaymentGatewayConfigPolicy;
 use Modules\Billing\Policies\InvoicePolicy;
 use Modules\Billing\Policies\PaymentPolicy;
+use Modules\Billing\Console\FlagOverdueInvoices;
 use Modules\Billing\Services\PatientFinancialHoldService;
 use Modules\Clinical\Models\Encounter;
 use Modules\Core\Contracts\PatientFinancialHoldChecker;
@@ -25,6 +26,10 @@ class BillingServiceProvider extends ModuleServiceProvider
     protected array $providers = [
         EventServiceProvider::class,
         RouteServiceProvider::class,
+    ];
+
+    protected array $commands = [
+        FlagOverdueInvoices::class,
     ];
 
     public function register(): void

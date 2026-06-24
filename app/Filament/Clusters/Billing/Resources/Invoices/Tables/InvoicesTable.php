@@ -12,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +54,12 @@ class InvoicesTable
                     ->getStateUsing(fn ($record) => $record?->balanceDue() ?? 0),
                 TextColumn::make('issued_at')->dateTime()->sortable(),
                 TextColumn::make('due_at')->dateTime()->sortable(),
+                TextColumn::make('overdue')
+                    ->label(__('Overdue'))
+                    ->badge()
+                    ->color(fn (Invoice $record): string => $record->isOverdue() ? 'danger' : 'gray')
+                    ->formatStateUsing(fn (Invoice $record): string => $record->isOverdue() ? __('Overdue') : '—')
+                    ->visible(fn ($record) => $record?->due_at !== null),
             ])
             ->filters([
                 Filter::make('issued_at')
@@ -112,6 +119,15 @@ class InvoicesTable
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record?->display_name)
                     ->preload()
                     ->searchable(),
+                TernaryFilter::make('overdue')
+                    ->label(__('Overdue'))
+                    ->queries(
+                        true: fn (Builder $query) => $query->scopes(['overdue' => []]),
+                        false: fn (Builder $query) => $query->where(function (Builder $q) {
+                            $q->whereNull('due_at')->orWhere('due_at', '>=', now());
+                        }),
+                        blank: fn (Builder $query) => $query,
+                    ),
             ], layout: FiltersLayout::AboveContent)
             ->recordActions([
                 RecordInvoicePaymentAction::make()
