@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Modules\Billing\Console\FlagOverdueInvoices;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
@@ -50,9 +51,20 @@ class BillingServiceProvider extends ModuleServiceProvider
         Gate::policy(BranchPaymentGatewayConfig::class, BranchPaymentGatewayConfigPolicy::class);
 
         InvoiceLine::observe(InvoiceLineObserver::class);
-
+        $this->registerCommandSchedules();
         Encounter::resolveRelationUsing('invoices', function (Encounter $encounter) {
             return $encounter->hasMany(Invoice::class);
+        });
+    }
+
+    /**
+     * Register command Schedules.
+     */
+    protected function registerCommandSchedules(): void
+    {
+        $this->app->booted(function () {
+            $schedule = $this->app->make(Schedule::class);
+            $schedule->command('invoices:check-overdue')->dailyAt('08:00');
         });
     }
 }

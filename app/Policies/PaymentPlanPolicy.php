@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Modules\Billing\Policies;
 
+use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use Modules\Billing\Models\PaymentPlan;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
 class PaymentPlanPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny PaymentPlan');
@@ -66,5 +66,4 @@ class PaymentPlanPolicy
     {
         return $authUser->can('Reorder PaymentPlan');
     }
-
 }

@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Billing\Enums\PaymentPlanStatus;
-use Modules\Core\Models\User;
+use Modules\Core\Models\CoreUser;
 
+/**
+ * @property string $total_amount
+ */
 class PaymentPlan extends Model
 {
     use HasFactory, HasUuids;
@@ -49,7 +52,7 @@ class PaymentPlan extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(CoreUser::class, 'created_by');
     }
 
     public function remainingBalance(): string

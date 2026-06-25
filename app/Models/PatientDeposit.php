@@ -11,9 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Billing\Database\Factories\PatientDepositFactory;
 use Modules\Billing\Enums\PatientDepositStatus;
 use Modules\Core\Models\Branch;
-use Modules\Core\Models\User;
+use Modules\Core\Models\CoreUser;
 use Modules\Patient\Models\Patient;
 
+/**
+ * @property PatientDepositStatus $status
+ * @property string $unallocated_balance
+ */
 class PatientDeposit extends Model
 {
     use HasFactory, HasUuids;
@@ -54,7 +58,7 @@ class PatientDeposit extends Model
 
     public function recorder(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'recorded_by');
+        return $this->belongsTo(CoreUser::class, 'recorded_by');
     }
 
     public function applications(): HasMany

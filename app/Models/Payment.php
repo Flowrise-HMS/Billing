@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentType;
 use Modules\Core\Models\Branch;
@@ -55,7 +56,7 @@ class Payment extends Model
         return $this->hasMany(PaymentAllocation::class);
     }
 
-    public function patientDeposit(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function patientDeposit(): HasOne
     {
         return $this->hasOne(PatientDeposit::class);
     }

@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Billing\Enums\PaymentPlanInstallmentStatus;
 
+/**
+ * @property string $amount
+ * @property string $paid_amount
+ */
 class PaymentPlanInstallment extends Model
 {
     use HasUuids;
