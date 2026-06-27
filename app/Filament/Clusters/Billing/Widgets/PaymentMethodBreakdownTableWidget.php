@@ -8,6 +8,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\SummarizesReportTableColumns;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
@@ -15,6 +16,7 @@ class PaymentMethodBreakdownTableWidget extends BaseWidget
 {
     use InteractsWithReportPayload;
     use InteractsWithWidgetShield;
+    use SummarizesReportTableColumns;
 
     protected static ?string $cluster = BillingCluster::class;
 
@@ -32,8 +34,10 @@ class PaymentMethodBreakdownTableWidget extends BaseWidget
                     ->label(__('Method'))
                     ->formatStateUsing(fn (mixed $state): string => PaymentMethod::tryFrom((string) $state)?->getLabel() ?? (string) $state),
                 CurrencyColumn::make('total_collected')
-                    ->label(__('Collected')),
+                    ->label(__('Collected'))
+                    ->summarize($this->reportMoneySumSummarizer('total_collected')),
             ])
+            ->summaries(pageCondition: false)
             ->paginated(false)
             ->emptyStateHeading(__('No data'));
     }

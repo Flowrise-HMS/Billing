@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Tests\Feature;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Data\BillingReportCriteria;
@@ -12,8 +13,10 @@ use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Models\Payment;
+use Modules\Billing\Models\PaymentAllocation;
 use Modules\Billing\Services\RevenueReportService;
 use Modules\Core\Database\Factories\BranchFactory;
+use Modules\Core\Support\ClientIdentity;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
 use Tests\TestCase;
@@ -379,5 +382,109 @@ class RevenueReportServiceTest extends TestCase
 
         $this->assertSame('30', (string) $report['insurance_split']['patient_amount']);
         $this->assertSame('70', (string) $report['insurance_split']['insurer_amount']);
+    }
+
+    public function test_recent_payments_include_guest_client_and_cashier(): void
+    {
+        Carbon::setTestNow('2026-05-31 12:00:00');
+
+        $branch = BranchFactory::new()->create();
+        $cashier = User::factory()->create(['name' => 'Front Desk Cashier']);
+
+        $invoice = Invoice::withoutEvents(fn () => Invoice::query()->withoutGlobalScopes()->create([
+            'organization_id' => $branch->organization_id,
+            'branch_id' => $branch->id,
+            'patient_id' => null,
+            'guest_name' => 'Walk-in Guest',
+            'guest_phone' => '+233201234567',
+            'invoice_number' => Invoice::generateInvoiceNumber((string) $branch->id),
+            'status' => InvoiceStatus::PartiallyPaid,
+            'invoice_type' => InvoiceType::Standalone,
+            'currency' => 'GHS',
+            'issued_at' => '2026-05-10 08:00:00',
+            'total' => 100,
+            'amount_paid' => 0,
+        ]));
+
+        $line = InvoiceLine::query()->create([
+            'invoice_id' => $invoice->id,
+            'description' => 'Guest service',
+            'quantity' => 1,
+            'unit_price' => 100,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'line_total' => 100,
+            'amount_paid' => 0,
+            'line_status' => InvoiceLineStatus::Unpaid,
+        ]);
+
+        Payment::query()->create([
+            'patient_id' => null,
+            'branch_id' => $branch->id,
+            'method' => PaymentMethod::Cash,
+            'gateway' => 'cash',
+            'amount' => 40,
+            'currency' => 'GHS',
+            'provider_transaction_id' => 'guest-pay-txn',
+            'received_at' => '2026-05-12 10:00:00',
+            'recorded_by' => $cashier->id,
+        ]);
+
+        $payment = Payment::query()->where('provider_transaction_id', 'guest-pay-txn')->firstOrFail();
+
+        PaymentAllocation::query()->create([
+            'payment_id' => $payment->id,
+            'invoice_line_id' => $line->id,
+            'amount' => 40,
+        ]);
+
+        $report = app(RevenueReportService::class)->build(
+            Carbon::parse('2026-05-01'),
+            Carbon::parse('2026-05-31')
+        );
+
+        $this->assertCount(1, $report['recent_payments']);
+
+        $recent = $report['recent_payments'][0];
+        $client = ClientIdentity::fromArray($recent['client']);
+
+        $this->assertSame(ClientIdentity::TYPE_GUEST, $client->type);
+        $this->assertSame('Walk-in Guest', $client->name);
+        $this->assertSame('Front Desk Cashier', $recent['cashier_name']);
+    }
+
+    public function test_top_outstanding_includes_guest_client(): void
+    {
+        Carbon::setTestNow('2026-05-31 12:00:00');
+
+        $branch = BranchFactory::new()->create();
+
+        Invoice::withoutEvents(fn () => Invoice::query()->withoutGlobalScopes()->create([
+            'organization_id' => $branch->organization_id,
+            'branch_id' => $branch->id,
+            'patient_id' => null,
+            'guest_name' => 'Outstanding Guest',
+            'guest_phone' => '+233209876543',
+            'invoice_number' => Invoice::generateInvoiceNumber((string) $branch->id),
+            'status' => InvoiceStatus::Issued,
+            'invoice_type' => InvoiceType::Standalone,
+            'currency' => 'GHS',
+            'issued_at' => '2026-05-05 08:00:00',
+            'due_at' => '2026-03-01 00:00:00',
+            'total' => 120,
+            'amount_paid' => 0,
+        ]));
+
+        $report = app(RevenueReportService::class)->build(
+            Carbon::parse('2026-05-01'),
+            Carbon::parse('2026-05-31')
+        );
+
+        $this->assertCount(1, $report['top_outstanding']);
+
+        $client = ClientIdentity::fromArray($report['top_outstanding'][0]['client']);
+
+        $this->assertSame(ClientIdentity::TYPE_GUEST, $client->type);
+        $this->assertSame('Outstanding Guest', $client->name);
     }
 }

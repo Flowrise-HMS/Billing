@@ -30,6 +30,9 @@ class PaymentInfolist
                             ->label(__('Transaction ID'))
                             ->copyable(),
                         TextEntry::make('received_at')->dateTime(),
+                        TextEntry::make('recorder.name')
+                            ->label(__('Cashier'))
+                            ->placeholder(__('N/A')),
                         TextEntry::make('metadata.funded_by_deposit_id')
                             ->label(__('Funded by deposit'))
                             ->visible(fn ($record) => ! empty($record->metadata['funded_by_deposit_id'] ?? null))

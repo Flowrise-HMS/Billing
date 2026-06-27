@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,9 @@ use Modules\Core\Support\ClientIdentity;
 use Modules\Core\Support\ClientIdentityResolver;
 use Modules\Patient\Models\Patient;
 
+/**
+ * @property string|null $patient_id
+ */
 class Payment extends Model implements ProvidesClientIdentity
 {
     use HasFactory, HasUuids;
@@ -52,6 +56,11 @@ class Payment extends Model implements ProvidesClientIdentity
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function recorder(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recorded_by');
     }
 
     public function allocations(): HasMany

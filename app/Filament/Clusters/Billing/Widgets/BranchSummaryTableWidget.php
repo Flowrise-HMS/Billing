@@ -7,6 +7,7 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\SummarizesReportTableColumns;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
@@ -14,6 +15,7 @@ class BranchSummaryTableWidget extends BaseWidget
 {
     use InteractsWithReportPayload;
     use InteractsWithWidgetShield;
+    use SummarizesReportTableColumns;
 
     protected static ?string $cluster = BillingCluster::class;
 
@@ -30,12 +32,16 @@ class BranchSummaryTableWidget extends BaseWidget
                 TextColumn::make('branch_name')
                     ->label(__('Branch')),
                 CurrencyColumn::make('billed')
-                    ->label(__('Billed')),
+                    ->label(__('Billed'))
+                    ->summarize($this->reportMoneySumSummarizer('billed')),
                 CurrencyColumn::make('total_collected')
-                    ->label(__('Collected')),
+                    ->label(__('Collected'))
+                    ->summarize($this->reportMoneySumSummarizer('total_collected')),
                 CurrencyColumn::make('outstanding')
-                    ->label(__('Outstanding')),
+                    ->label(__('Outstanding'))
+                    ->summarize($this->reportMoneySumSummarizer('outstanding')),
             ])
+            ->summaries(pageCondition: false)
             ->paginated(false)
             ->emptyStateHeading(__('No data'));
     }

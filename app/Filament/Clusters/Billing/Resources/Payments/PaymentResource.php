@@ -61,6 +61,11 @@ class PaymentResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery();
+        return parent::getEloquentQuery()
+            ->with([
+                'patient',
+                'recorder',
+                'allocations.invoiceLine.invoice.patient',
+            ]);
     }
 }

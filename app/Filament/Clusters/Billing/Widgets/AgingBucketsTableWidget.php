@@ -7,6 +7,7 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\SummarizesReportTableColumns;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
@@ -14,6 +15,7 @@ class AgingBucketsTableWidget extends BaseWidget
 {
     use InteractsWithReportPayload;
     use InteractsWithWidgetShield;
+    use SummarizesReportTableColumns;
 
     protected static ?string $cluster = BillingCluster::class;
 
@@ -30,11 +32,13 @@ class AgingBucketsTableWidget extends BaseWidget
                 TextColumn::make('bucket')
                     ->label(__('Bucket')),
                 CurrencyColumn::make('amount')
-                    ->label(__('Amount')),
+                    ->label(__('Amount'))
+                    ->summarize($this->reportMoneySumSummarizer('amount')),
                 TextColumn::make('count')
                     ->label(__('Invoices'))
                     ->numeric(),
             ])
+            ->summaries(pageCondition: false)
             ->paginated(false);
     }
 }

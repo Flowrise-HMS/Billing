@@ -12,6 +12,7 @@ use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Models\Payment;
 use Modules\Billing\Services\Concerns\NormalizesMoney;
 use Modules\Core\Models\Branch;
+use Modules\Core\Support\ClientIdentity;
 
 class RevenueReportService
 {
@@ -155,10 +156,19 @@ class RevenueReportService
         $rows[] = ['Recent Payments', 'Date', 'Amount / Method / Branch'];
 
         foreach ($report['recent_payments'] ?? [] as $payment) {
+            $client = ClientIdentity::fromArray($payment['client'] ?? []);
             $rows[] = [
                 'Recent Payments',
                 (string) $payment['received_at'],
-                sprintf('%s %s (%s) — %s', (string) $payment['amount'], (string) $payment['currency'], (string) $payment['method'], (string) $payment['branch_name']),
+                sprintf(
+                    '%s %s (%s) — %s — %s — %s',
+                    (string) $payment['amount'],
+                    (string) $payment['currency'],
+                    (string) $payment['method'],
+                    $client->displayWithIdentifier(),
+                    (string) $payment['branch_name'],
+                    (string) ($payment['cashier_name'] ?? __('N/A')),
+                ),
             ];
         }
 
@@ -166,10 +176,16 @@ class RevenueReportService
         $rows[] = ['Top Outstanding', 'Invoice', 'Balance / Days overdue'];
 
         foreach ($report['top_outstanding'] ?? [] as $invoice) {
+            $client = ClientIdentity::fromArray($invoice['client'] ?? []);
             $rows[] = [
                 'Top Outstanding',
                 (string) $invoice['invoice_number'],
-                (string) $invoice['balance'].' ('.(string) $invoice['days_overdue'].' days)',
+                sprintf(
+                    '%s — %s (%s days)',
+                    $client->displayWithIdentifier(),
+                    (string) $invoice['balance'],
+                    (string) $invoice['days_overdue'],
+                ),
             ];
         }
 
@@ -279,6 +295,8 @@ class RevenueReportService
             ->with([
                 'patient' => fn ($query) => $query->withoutGlobalScopes(),
                 'branch',
+                'recorder',
+                'allocations.invoiceLine.invoice.patient' => fn ($query) => $query->withoutGlobalScopes(),
             ])
             ->orderByDesc('received_at')
             ->limit(50)
@@ -286,8 +304,9 @@ class RevenueReportService
             ->map(fn (Payment $payment): array => [
                 'id' => (string) $payment->id,
                 'received_at' => $payment->received_at?->format('Y-m-d H:i') ?? '',
-                'patient_name' => $payment->clientIdentity()->name,
+                'client' => $payment->clientIdentity()->toArray(),
                 'branch_name' => $payment->branch?->name ?? __('N/A'),
+                'cashier_name' => $payment->recorder?->name ?? __('N/A'),
                 'method' => $payment->method instanceof PaymentMethod
                     ? $payment->method->value
                     : (string) $payment->method,
@@ -328,7 +347,7 @@ class RevenueReportService
                 return [
                     'id' => (string) $invoice->id,
                     'invoice_number' => (string) $invoice->invoice_number,
-                    'patient_name' => $invoice->clientIdentity()->name,
+                    'client' => $invoice->clientIdentity()->toArray(),
                     'branch_name' => $invoice->branch?->name ?? __('N/A'),
                     'issued_at' => $invoice->issued_at?->format('Y-m-d') ?? '',
                     'total' => $this->normalizeMoneyString((string) $invoice->total),
