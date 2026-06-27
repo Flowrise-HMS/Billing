@@ -4,9 +4,10 @@
 <body>
 <p>{{ __('Hello,') }}</p>
 <p>{{ __('This is a reminder that invoice :number has an outstanding balance.', ['number' => $invoice->invoice_number]) }}</p>
+@php($client = $invoice->clientIdentity())
 <p>{{ __('Amount due: :amount :currency', ['amount' => $balance, 'currency' => $invoice->currency]) }}</p>
-@if($invoice->patient)
-<p>{{ __('MRN') }}: {{ $invoice->patient->mrn }}</p>
+@if($client->identifier)
+<p>{{ $client->identifierLabel }}: {{ $client->identifier }}</p>
 @endif
 <p><a href="{{ $pdfUrl }}">{{ __('View invoice PDF') }}</a></p>
 @if($checkoutUrl ?? false)

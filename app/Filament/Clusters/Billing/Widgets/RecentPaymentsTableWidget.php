@@ -8,6 +8,7 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Tables\PaymentsTable;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
@@ -32,6 +33,7 @@ class RecentPaymentsTableWidget extends BaseWidget
                 TextColumn::make('received_at')
                     ->label(__('Date')),
                 TextColumn::make('patient_name')
+                    ->state(fn($record) => $record?->clientIdentity())
                     ->label(__('Patient')),
                 TextColumn::make('branch_name')
                     ->label(__('Branch')),
@@ -42,6 +44,7 @@ class RecentPaymentsTableWidget extends BaseWidget
                     ->label(__('Amount'))
                     ->currency(fn (array $record): ?string => isset($record['currency']) ? (string) $record['currency'] : null),
             ])
+            ->filters(PaymentsTable::filters())
             ->recordActions([
                 Action::make('receipt')
                     ->label(__('Receipt'))
@@ -49,7 +52,7 @@ class RecentPaymentsTableWidget extends BaseWidget
                     ->url(fn (array $record): string => route('billing.payments.receipt', $record['id']))
                     ->openUrlInNewTab(),
             ])
-            ->paginated(false)
+            ->paginated([10,50,100,150,200,500])
             ->emptyStateHeading(__('No payments in this period'));
     }
 }

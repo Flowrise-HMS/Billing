@@ -18,6 +18,9 @@ class InvoiceInfolist
                     ->columnSpanFull()
                     ->schema([
                         TextEntry::make('invoice_number'),
+                        TextEntry::make('client')
+                            ->label(__('Client'))
+                            ->state(fn (Invoice $record): string => $record->clientIdentity()->displayWithIdentifier()),
                         TextEntry::make('status'),
                         TextEntry::make('currency'),
                         CurrencyEntry::make('total')

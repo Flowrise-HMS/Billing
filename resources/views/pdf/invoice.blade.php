@@ -36,12 +36,7 @@
     </div>
 
     <div class="section">
-        <strong>{{ __('Patient') }}:</strong>
-        {{ $invoice->patient?->full_name ?? __('N/A') }}
-        @if ($invoice->patient?->mrn)
-            ({{ __('MRN') }}: {{ $invoice->patient->mrn }})
-        @endif
-        <br>
+        @include('core::print.partials.client-identity', ['client' => $invoice->clientIdentity()])
         @if($invoice->encounter?->encounter_number)
             <strong>{{ __('Encounter') }}:</strong> {{ $invoice->encounter->encounter_number }}<br>
         @endif

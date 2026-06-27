@@ -13,12 +13,15 @@ use Modules\Appointment\Models\Appointment;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Clinical\Models\Encounter;
+use Modules\Core\Contracts\ProvidesClientIdentity;
 use Modules\Core\Models\BaseModel;
 use Modules\Core\Models\Branch;
 use Modules\Core\Models\Organization;
+use Modules\Core\Support\ClientIdentity;
+use Modules\Core\Support\ClientIdentityResolver;
 use Modules\Patient\Models\Patient;
 
-class Invoice extends BaseModel
+class Invoice extends BaseModel implements ProvidesClientIdentity
 {
     use HasFactory, HasUuids;
 
@@ -171,5 +174,21 @@ class Invoice extends BaseModel
             ->whereNotNull('due_at')
             ->where('due_at', '<', now())
             ->whereIn('status', [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid]);
+    }
+
+    public function isGuest(): bool
+    {
+        return is_null($this->patient_id);
+    }
+
+    public function clientIdentity(): ClientIdentity
+    {
+        return ClientIdentityResolver::resolve(
+            patientFullName: $this->patient?->full_name,
+            patientMrn: $this->patient?->mrn,
+            guestName: $this->guest_name,
+            guestPhone: $this->guest_phone,
+            guestEmail: $this->guest_email,
+        );
     }
 }

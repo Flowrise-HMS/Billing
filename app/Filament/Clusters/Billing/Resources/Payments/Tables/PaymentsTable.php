@@ -19,21 +19,26 @@ class PaymentsTable
     {
         return $table
             ->columns(self::columns())
-            ->filters([
-                SelectFilter::make('branch_id')
-                    ->label(__('Branch'))
-                    ->relationship('branch', 'name')
-                    ->preload()
-                    ->searchable(),
-                SelectFilter::make('patient_id')
-                    ->label(__('Patient'))
-                    ->relationship('patient', 'mrn')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record?->display_name)
-                    ->preload()
-                    ->searchable(),
-            ])
+            ->filters(self::filters())
             ->recordActions(self::recordActions())
             ->defaultSort('received_at', 'desc');
+    }
+
+    public static function filters(): array
+    {
+        return [
+            SelectFilter::make('branch_id')
+                ->label(__('Branch'))
+                ->relationship('branch', 'name')
+                ->preload()
+                ->searchable(),
+            SelectFilter::make('patient_id')
+                ->label(__('Patient'))
+                ->relationship('patient', 'mrn')
+                ->getOptionLabelFromRecordUsing(fn ($record) => $record?->display_name)
+                ->preload()
+                ->searchable(),
+        ];
     }
 
     /**

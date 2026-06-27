@@ -30,11 +30,7 @@
     </div>
 
     <div class="section">
-        <strong>{{ __('Patient') }}:</strong>
-        {{ $payment->patient?->full_name ?? __('N/A') }}
-        @if ($payment->patient?->mrn)
-            ({{ __('MRN') }}: {{ $payment->patient->mrn }})
-        @endif
+        @include('core::print.partials.client-identity', ['client' => $client])
         <br>
         <strong>{{ __('Branch') }}:</strong> {{ $payment?->branch?->name ?? __('N/A') }}
     </div>

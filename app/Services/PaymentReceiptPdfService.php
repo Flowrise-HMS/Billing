@@ -22,6 +22,7 @@ class PaymentReceiptPdfService
 
         return Pdf::loadView('billing::pdf.receipt', [
             'payment' => $payment,
+            'client' => $payment->clientIdentity(),
             'allocations' => $allocations,
         ])->setPaper('a4')->output();
     }

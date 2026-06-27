@@ -48,7 +48,7 @@ class FlagOverdueInvoices extends Command
             $this->line(sprintf(
                 '  %s — %s (due: %s, balance: %s)',
                 $invoice->invoice_number,
-                $invoice->patient?->display_name ?? 'N/A',
+                $invoice->clientIdentity()->displayWithIdentifier(),
                 $invoice->due_at->toDateString(),
                 $invoice->balanceDue(),
             ));

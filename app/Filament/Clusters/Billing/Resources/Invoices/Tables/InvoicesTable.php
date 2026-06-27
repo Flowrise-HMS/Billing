@@ -21,6 +21,7 @@ use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Models\Invoice;
+use Modules\Core\Filament\Support\ClientIdentityColumn;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class InvoicesTable
@@ -31,7 +32,7 @@ class InvoicesTable
             ->columns([
                 TextColumn::make('#')->rowIndex(),
                 TextColumn::make('invoice_number')->copyable()->searchable()->sortable(),
-                TextColumn::make('patient.display_name')->label(__('Patient')),
+                ClientIdentityColumn::make(),
                 TextColumn::make('invoice_type')
                     ->label(__('Type'))
                     ->badge()

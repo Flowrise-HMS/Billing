@@ -286,7 +286,7 @@ class RevenueReportService
             ->map(fn (Payment $payment): array => [
                 'id' => (string) $payment->id,
                 'received_at' => $payment->received_at?->format('Y-m-d H:i') ?? '',
-                'patient_name' => $payment->patient?->full_name ?? __('Guest'),
+                'patient_name' => $payment->clientIdentity()->name,
                 'branch_name' => $payment->branch?->name ?? __('N/A'),
                 'method' => $payment->method instanceof PaymentMethod
                     ? $payment->method->value
@@ -328,7 +328,7 @@ class RevenueReportService
                 return [
                     'id' => (string) $invoice->id,
                     'invoice_number' => (string) $invoice->invoice_number,
-                    'patient_name' => $invoice->patient?->full_name ?? ($invoice->guest_name ?? __('Guest')),
+                    'patient_name' => $invoice->clientIdentity()->name,
                     'branch_name' => $invoice->branch?->name ?? __('N/A'),
                     'issued_at' => $invoice->issued_at?->format('Y-m-d') ?? '',
                     'total' => $this->normalizeMoneyString((string) $invoice->total),

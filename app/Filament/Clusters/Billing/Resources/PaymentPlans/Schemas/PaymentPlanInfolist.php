@@ -18,7 +18,9 @@ class PaymentPlanInfolist
                     ->columnSpanFull()
                     ->schema([
                         TextEntry::make('invoice.invoice_number')->label(__('Invoice')),
-                        TextEntry::make('invoice.patient.display_name')->label(__('Patient')),
+                        TextEntry::make('client')
+                            ->label(__('Client'))
+                            ->state(fn (PaymentPlan $record): string => $record->invoice?->clientIdentity()->displayWithIdentifier() ?? 'N/A'),
                         CurrencyEntry::make('total_amount')
                             ->currency(fn (PaymentPlan $record): string => $record->invoice?->currency ?? 'GHS'),
                         CurrencyEntry::make('down_payment')

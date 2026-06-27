@@ -16,7 +16,9 @@ class PaymentInfolist
                 Section::make(__('Payment'))
                     ->columnSpanFull()
                     ->schema([
-                        TextEntry::make('patient.display_name')->label(__('Patient')),
+                        TextEntry::make('client')
+                            ->label(__('Client'))
+                            ->state(fn ($record): string => $record->clientIdentity()->displayWithIdentifier()),
                         TextEntry::make('branch.name')->label(__('Branch')),
                         TextEntry::make('type')->badge(),
                         TextEntry::make('method')->badge(),

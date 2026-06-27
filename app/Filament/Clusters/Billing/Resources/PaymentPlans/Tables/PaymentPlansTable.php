@@ -7,6 +7,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Billing\Models\PaymentPlan;
+use Modules\Core\Filament\Support\ClientIdentityColumn;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
 
 class PaymentPlansTable
@@ -34,9 +35,9 @@ class PaymentPlansTable
                 ->label(__('Invoice'))
                 ->searchable()
                 ->sortable(),
-            TextColumn::make('invoice.patient.display_name')
-                ->label(__('Patient'))
-                ->searchable(),
+            ClientIdentityColumn::make(
+                resolve: fn (PaymentPlan $record) => $record->invoice?->clientIdentity(),
+            ),
             CurrencyColumn::make('total_amount')
                 ->currency(fn (PaymentPlan $record): string => $record->invoice?->currency ?? 'GHS'),
             TextColumn::make('installment_count')
