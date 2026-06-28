@@ -4,11 +4,13 @@ namespace Modules\Billing\Filament\Clusters\Billing\Widgets;
 
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
+use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Tables\PaymentsTable;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\InteractsWithReportPayload;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\Concerns\SummarizesReportTableColumns;
 use Modules\Core\Filament\Concerns\InteractsWithWidgetShield;
@@ -52,6 +54,9 @@ class RecentPaymentsTableWidget extends BaseWidget
                     ->summarize($this->reportMoneySumSummarizer('amount', 'currency')),
             ])
             ->summaries(pageCondition: false)
+            ->filters([
+
+            ])
             ->recordActions([
                 Action::make('receipt')
                     ->label(__('Receipt'))

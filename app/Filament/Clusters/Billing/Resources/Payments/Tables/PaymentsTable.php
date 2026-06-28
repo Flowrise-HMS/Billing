@@ -3,6 +3,9 @@
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Tables;
 
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -133,6 +136,10 @@ class PaymentsTable
             RefundPaymentAction::make()
                 ->mountUsing(fn (Action $action, Payment $record) => $action->arguments(['payment_id' => $record->id]))
                 ->visible(fn (Payment $record) => $record->type === PaymentType::Payment),
+            ActionGroup::make([
+                ViewAction::make(),
+                DeleteAction::make(),
+            ])
         ];
     }
 }

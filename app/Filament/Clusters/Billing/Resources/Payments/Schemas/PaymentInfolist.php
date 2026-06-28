@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Schemas;
 
+use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -15,6 +16,7 @@ class PaymentInfolist
             ->components([
                 Section::make(__('Payment'))
                     ->columnSpanFull()
+                    ->columns(2)
                     ->schema([
                         TextEntry::make('client')
                             ->label(__('Client'))
@@ -37,8 +39,8 @@ class PaymentInfolist
                             ->label(__('Funded by deposit'))
                             ->visible(fn ($record) => ! empty($record->metadata['funded_by_deposit_id'] ?? null))
                             ->copyable(),
-                        TextEntry::make('metadata')
-                            ->json()
+                        KeyValueEntry::make('metadata')
+                            ->columnSpanFull()
                             ->visible(fn ($state) => ! empty($state)),
                     ]),
             ]);
