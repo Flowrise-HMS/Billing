@@ -3,12 +3,14 @@
 namespace Modules\Billing\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Billing\Data\BillingReportCriteria;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentType;
 use Modules\Core\Contracts\ProvidesClientIdentity;
@@ -88,5 +90,48 @@ class Payment extends Model implements ProvidesClientIdentity
         }
 
         return ClientIdentityResolver::resolve();
+    }
+
+    public static function queryForReport(BillingReportCriteria $criteria): Builder
+    {
+        return static::applyReportCriteria(static::query(), $criteria);
+    }
+
+    public static function queryForReportListing(BillingReportCriteria $criteria): Builder
+    {
+        return static::applyReportCriteria(static::query(), $criteria)
+            ->with(static::reportEagerLoads())
+            ->orderByDesc('received_at');
+    }
+
+    /**
+     * @return array<string|int, mixed>
+     */
+    public static function reportEagerLoads(): array
+    {
+        return [
+            'patient' => fn ($query) => $query->withoutGlobalScopes(),
+            'branch',
+            'recorder',
+            'allocations.invoiceLine.invoice.patient' => fn ($query) => $query->withoutGlobalScopes(),
+        ];
+    }
+
+    protected static function applyReportCriteria(Builder $query, BillingReportCriteria $criteria): Builder
+    {
+        $start = $criteria->startDate->copy()->startOfDay();
+        $end = $criteria->endDate->copy()->endOfDay();
+
+        $query->whereBetween('received_at', [$start, $end]);
+
+        if ($criteria->branchId) {
+            $query->where('branch_id', $criteria->branchId);
+        }
+
+        if ($criteria->paymentMethod) {
+            $query->where('method', $criteria->paymentMethod);
+        }
+
+        return $query;
     }
 }

@@ -7,7 +7,9 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -20,6 +22,7 @@ use Modules\Billing\Filament\Actions\RefundPaymentAction;
 use Modules\Billing\Models\Payment;
 use Modules\Core\Filament\Support\ClientIdentityColumn;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
+use Modules\Core\Support\Currency;
 
 class PaymentsTable
 {
@@ -32,22 +35,31 @@ class PaymentsTable
             ->defaultSort('received_at', 'desc');
     }
 
+    /**
+     * Eloquent query filters only — do not attach to array-backed `records()` tables.
+     *
+     * @return array<int, Filter|SelectFilter>
+     */
     public static function filters(): array
     {
         return [
             Filter::make('received_at')
-                ->label(__('Received date'))
+
                 ->columns(2)
                 ->columnSpan(2)
                 ->schema([
-                    DateTimePicker::make('received_from')
-                        ->label(__('From'))
-                        ->placeholder(__('From date'))
-                        ->native(false),
-                    DateTimePicker::make('received_until')
-                        ->label(__('Until'))
-                        ->placeholder(__('To date'))
-                        ->native(false),
+                    Fieldset::make()
+                        ->columnSpanFull()
+                        ->label(__('Received date'))->schema([
+                            DateTimePicker::make('received_from')
+                                ->label(__('From'))
+                                ->placeholder(__('From date'))
+                                ->native(false),
+                            DateTimePicker::make('received_until')
+                                ->label(__('Until'))
+                                ->placeholder(__('To date'))
+                                ->native(false),
+                        ]),
                 ])
                 ->query(function (Builder $query, array $data): Builder {
                     return $query
@@ -55,18 +67,21 @@ class PaymentsTable
                         ->when($data['received_until'], fn (Builder $q, $date): Builder => $q->where('received_at', '<=', $date));
                 }),
             Filter::make('created_at')
-                ->label(__('Created date'))
                 ->columns(2)
                 ->columnSpan(2)
                 ->schema([
-                    DateTimePicker::make('created_from')
-                        ->label(__('From'))
-                        ->placeholder(__('From date'))
-                        ->native(false),
-                    DateTimePicker::make('created_until')
-                        ->label(__('Until'))
-                        ->placeholder(__('To date'))
-                        ->native(false),
+                    Fieldset::make()
+                        ->columnSpanFull()
+                        ->label(__('Created date'))->schema([
+                            DateTimePicker::make('created_from')
+                                ->label(__('From'))
+                                ->placeholder(__('From date'))
+                                ->native(false),
+                            DateTimePicker::make('created_until')
+                                ->label(__('Until'))
+                                ->placeholder(__('To date'))
+                                ->native(false),
+                        ]),
                 ])
                 ->query(function (Builder $query, array $data): Builder {
                     return $query
@@ -116,6 +131,34 @@ class PaymentsTable
     }
 
     /**
+     * @return array<int, TextColumn|CurrencyColumn>
+     */
+    public static function reportColumns(): array
+    {
+        return [
+            TextColumn::make('id')->label('ID')->limit(8)->tooltip(fn (Payment $r) => $r->id),
+            ClientIdentityColumn::make(),
+            TextColumn::make('recorder.name')
+                ->label(__('Cashier'))
+                ->sortable()
+                ->placeholder(__('N/A')),
+            TextColumn::make('type')->badge(),
+            TextColumn::make('method')->badge(),
+            TextColumn::make('gateway'),
+            CurrencyColumn::make('amount')
+                ->currency(fn (Payment $record): string => (string) $record->currency)
+                ->summarize(
+                    Sum::make()
+                        ->label(__('Total'))
+                        ->money(fn (): string => Currency::defaultCode(), locale: Currency::defaultLocale(), decimalPlaces: 2),
+                ),
+            TextColumn::make('currency'),
+            TextColumn::make('received_at')->dateTime()->sortable(),
+            TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+        ];
+    }
+
+    /**
      * @return array<int, Action>
      */
     public static function recordActions(): array
@@ -139,7 +182,7 @@ class PaymentsTable
             ActionGroup::make([
                 ViewAction::make(),
                 DeleteAction::make(),
-            ])
+            ]),
         ];
     }
 }

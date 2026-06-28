@@ -150,7 +150,12 @@ class RevenueReport extends Page
             BranchSummaryTableWidget::make($payload),
             PaymentMethodBreakdownTableWidget::make($payload),
             AgingBucketsTableWidget::make($payload),
-            RecentPaymentsTableWidget::make($payload),
+            RecentPaymentsTableWidget::make([
+                'startDate' => $this->startDate,
+                'endDate' => $this->endDate,
+                'branchId' => $this->branchId,
+                'paymentMethod' => $this->paymentMethod,
+            ]),
             TopOutstandingInvoicesTableWidget::make($payload),
         ];
     }

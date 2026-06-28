@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentType;
 use Modules\Billing\Models\Payment;
+use Modules\Billing\Policies\PaymentPolicy;
 use Modules\Billing\Services\PaymentRecordingService;
 
 class RefundPaymentAction
@@ -22,7 +23,7 @@ class RefundPaymentAction
             ->color('danger')
             ->modalHeading(__('Issue refund'))
             ->modalWidth('lg')
-            ->hidden(fn () => ! Auth::user()?->can('Create Payment'))
+            ->hidden(fn () => ! app(PaymentPolicy::class)->create(Auth::user()))
             ->schema([
                 TextInput::make('amount')
                     ->label(__('Refund amount'))

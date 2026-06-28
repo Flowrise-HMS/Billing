@@ -291,14 +291,12 @@ class RevenueReportService
         ?string $branchId,
         ?string $paymentMethod
     ): array {
-        return $this->paymentsQuery($start, $end, $branchId, $paymentMethod)
-            ->with([
-                'patient' => fn ($query) => $query->withoutGlobalScopes(),
-                'branch',
-                'recorder',
-                'allocations.invoiceLine.invoice.patient' => fn ($query) => $query->withoutGlobalScopes(),
-            ])
-            ->orderByDesc('received_at')
+        return Payment::queryForReportListing(new BillingReportCriteria(
+            startDate: $start,
+            endDate: $end,
+            branchId: $branchId,
+            paymentMethod: $paymentMethod,
+        ))
             ->limit(50)
             ->get()
             ->map(fn (Payment $payment): array => [
@@ -451,18 +449,12 @@ class RevenueReportService
         ?string $branchId = null,
         ?string $paymentMethod = null
     ) {
-        $query = Payment::query()
-            ->whereBetween('received_at', [$start, $end]);
-
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
-
-        if ($paymentMethod) {
-            $query->where('method', $paymentMethod);
-        }
-
-        return $query;
+        return Payment::queryForReport(new BillingReportCriteria(
+            startDate: $start,
+            endDate: $end,
+            branchId: $branchId,
+            paymentMethod: $paymentMethod,
+        ));
     }
 
     protected function sumOutstandingAt(CarbonInterface $atDate, ?string $branchId = null): string
