@@ -44,9 +44,6 @@ class InvoicePolicy
             return false;
         }
 
-        if (! $invoice->isDraft()) {
-            return false;
-        }
 
         return $this->sameBranch($user, $invoice);
     }
@@ -54,10 +51,6 @@ class InvoicePolicy
     public function delete(User $user, Invoice $invoice): bool
     {
         if (! $user->can('Delete Invoice')) {
-            return false;
-        }
-
-        if (! $invoice->isDraft()) {
             return false;
         }
 
