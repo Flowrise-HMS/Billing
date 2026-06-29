@@ -3,6 +3,7 @@
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables;
 
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -129,7 +130,7 @@ class InvoicesTable
                         }),
                         blank: fn (Builder $query) => $query,
                     ),
-            ], layout: FiltersLayout::AboveContent)
+            ], layout: FiltersLayout::AboveContentCollapsible)
             ->recordActions([
                 RecordInvoicePaymentAction::make()
                     ->mountUsing(function ($action, $record): void {
@@ -150,14 +151,16 @@ class InvoicesTable
                     ->url(fn ($record) => route('billing.invoices.pdf', ['invoice' => $record, 'download' => 1]))
                     ->openUrlInNewTab()
                     ->visible(fn () => Auth::user()?->can('download_invoice')),
-                EditAction::make()
-                    ->visible(fn ($record) => $record->status === InvoiceStatus::Draft),
-                ViewAction::make()->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record])),
-                DeleteAction::make(),
-                Action::make('activities')
-                    ->label('Activities')
-                    ->icon('heroicon-o-bell-alert')
-                    ->url(fn ($record) => InvoiceResource::getUrl('activities', ['record' => $record])),
+                ActionGroup::make([
+                    ViewAction::make()->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record])),
+                    EditAction::make()
+                        ->visible(fn ($record) => $record->status === InvoiceStatus::Draft),
+                    DeleteAction::make(),
+                    Action::make('activities')
+                        ->label('Activities')
+                        ->icon('heroicon-o-bell-alert')
+                        ->url(fn ($record) => InvoiceResource::getUrl('activities', ['record' => $record])),
+                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }

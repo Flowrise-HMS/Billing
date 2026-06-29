@@ -49,7 +49,11 @@
 
                 <x-filament::section>
                     <x-slot name="heading">{{ __('Line items') }}</x-slot>
-                    {{ $this->getLineItemsTable() }}
+                    @livewire(
+                        \Modules\Billing\Filament\Clusters\Billing\Widgets\BillingDeskLineItemsTableWidget::class,
+                        ['invoiceId' => $selectedInvoiceId],
+                        key('billing-desk-lines-' . ($selectedInvoiceId ?? 'none'))
+                    )
 
                     @if ($selectedInvoice['payment_plan'])
                         <x-filament::section class="mt-4">

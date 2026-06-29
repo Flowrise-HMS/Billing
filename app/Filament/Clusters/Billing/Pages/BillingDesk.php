@@ -27,8 +27,6 @@ use Modules\Billing\Filament\Actions\ApplyDepositAction;
 use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
 use Modules\Billing\Models\Invoice;
-use Modules\Billing\Models\InvoiceLine;
-use Modules\Billing\Models\PaymentAllocation;
 use Modules\Billing\Models\PaymentPlanInstallment;
 use Modules\Billing\Services\PaymentPlanService;
 use Modules\Core\Classes\Services\BranchService;
@@ -95,8 +93,7 @@ class BillingDesk extends Page implements HasTable
             'lines' => $invoice->lines
                 ->reject(fn ($l) => $l->line_status === InvoiceLineStatus::Void)
                 ->map(fn ($l) => array_merge($l->toArray(), [
-                    'latest_payment_id' => $l->paymentAllocations
-                        ->sortByDesc(fn ($pa) => $pa->payment?->created_at)
+                    'latest_payment_id' => $l->paymentAllocations?->sortByDesc(fn ($pa) => $pa->payment?->created_at)
                         ->first()?->payment_id,
                 ]))
                 ->values()
@@ -222,71 +219,6 @@ class BillingDesk extends Page implements HasTable
             ->defaultSort('issued_at', 'asc')
             ->paginated([10, 25, 50, 100])
             ->searchable();
-    }
-
-    public function getLineItemsTable(): Table
-    {
-        if (! $this->selectedInvoice) {
-            return Table::make($this)
-                ->query(InvoiceLine::whereRaw('0 = 1'))
-                ->paginated(false);
-        }
-
-        $lineIds = collect($this->selectedInvoice['lines'])->pluck('id')->toArray();
-        $currency = $this->selectedInvoice['currency'] ?? 'GHS';
-
-        return Table::make($this)
-            ->query(
-                InvoiceLine::whereIn('id', $lineIds)
-                    ->with('paymentAllocations.payment')
-                    ->orderBy('id')
-            )
-            ->columns([
-                TextColumn::make('description')
-                    ->label(__('Item')),
-                TextColumn::make('quantity')
-                    ->label(__('Qty')),
-                TextColumn::make('line_total')
-                    ->label(__('Total'))
-                    ->money($currency)
-                    ->alignEnd(),
-                TextColumn::make('amount_paid')
-                    ->label(__('Paid'))
-                    ->money($currency)
-                    ->alignEnd(),
-                TextColumn::make('balance')
-                    ->label(__('Balance'))
-                    ->alignEnd()
-                    ->getStateUsing(fn (InvoiceLine $record): string => $record->remainingAmount())
-                    ->formatStateUsing(fn (string $state): string => number_format((float) $state, 2))
-                    ->color(fn (string $state): string => (float) $state > 0 ? 'danger' : 'success'),
-            ])
-            ->actions([
-                Action::make('print_receipt')
-                    ->label(__('Print receipt'))
-                    ->icon('heroicon-m-printer')
-                    ->color('gray')
-                    ->url(fn (InvoiceLine $record): string => $this->getLatestPaymentUrl($record))
-                    ->openUrlInNewTab()
-                    ->visible(fn (InvoiceLine $record): bool => $this->getLatestPaymentId($record) !== null),
-            ])
-            ->paginated(false)
-            ->selectable(false)
-            ->searchable(false);
-    }
-
-    private function getLatestPaymentId(InvoiceLine $record): ?string
-    {
-        return $record->paymentAllocations
-            ->sortByDesc(fn (PaymentAllocation $pa) => $pa->payment?->created_at)
-            ->first()?->payment_id;
-    }
-
-    private function getLatestPaymentUrl(InvoiceLine $record): string
-    {
-        $paymentId = $this->getLatestPaymentId($record);
-
-        return route('billing.payments.receipt', $paymentId).'?line_id='.$record->id;
     }
 
     protected function getHeaderActions(): array
