@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Tests\Unit;
 
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Models\Invoice;
 use Modules\Core\Models\Branch;
 use Modules\Core\Support\ClientIdentity;
@@ -9,6 +10,8 @@ use Tests\TestCase;
 
 class InvoiceClientIdentityTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();

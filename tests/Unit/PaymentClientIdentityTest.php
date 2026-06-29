@@ -2,6 +2,7 @@
 
 namespace Modules\Billing\Tests\Unit;
 
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Models\Invoice;
@@ -14,6 +15,8 @@ use Tests\TestCase;
 
 class PaymentClientIdentityTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
