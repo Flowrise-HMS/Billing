@@ -115,13 +115,15 @@
                         >
                             {{ __('Print') }}
                         </x-filament::button>
-                        <x-filament::button
-                            wire:click="mountAction('collectPayment', { invoice_id: '{{ $selectedInvoice['id'] }}' })"
-                            color="success"
-                            icon="heroicon-m-currency-dollar"
-                        >
-                            {{ __('Collect payment') }}
-                        </x-filament::button>
+                        @if ($selectedInvoice['can_collect_payment'] ?? false)
+                            <x-filament::button
+                                wire:click="mountAction('collectPayment', { invoice_id: '{{ $selectedInvoice['id'] }}' })"
+                                color="success"
+                                icon="heroicon-m-currency-dollar"
+                            >
+                                {{ __('Collect payment') }}
+                            </x-filament::button>
+                        @endif
                     </div>
                 </x-filament::section>
             @else

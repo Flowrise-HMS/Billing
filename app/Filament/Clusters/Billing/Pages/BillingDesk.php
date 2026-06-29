@@ -42,6 +42,7 @@ class BillingDesk extends Page implements HasTable
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
     protected string $view = 'billing::filament.clusters.billing.pages.billing-desk';
+    protected static string $layout = 'filament-panels::components.layout.base';
 
     public ?string $selectedInvoiceId = null;
 
@@ -85,6 +86,8 @@ class BillingDesk extends Page implements HasTable
             'total' => $invoice->total,
             'amount_paid' => $invoice->amount_paid,
             'balance_due' => $invoice->balanceDue(),
+            'can_collect_payment' => !in_array($invoice->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)
+                && bccomp($invoice->balanceDue(), '0', 2) > 0,
             'currency' => $invoice->currency ?? 'GHS',
             'patient_name' => $invoice->patient?->display_name ?? $invoice->guest_name ?? __('Walk-in'),
             'issued_at' => $invoice->issued_at?->format('Y-m-d H:i'),
@@ -223,10 +226,11 @@ class BillingDesk extends Page implements HasTable
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('home')
+            ->icon('heroicon-o-home')
+            ->url(filament()->getCurrentPanel()?->getUrl()),
             RecordInvoicePaymentAction::make()
-                ->visible(fn (): bool => $this->selectedInvoice !== null
-                    && ! in_array($this->selectedInvoice['status'], [InvoiceStatus::Void->value], true)
-                    && (float) $this->selectedInvoice['balance_due'] > 0),
+                ->visible(fn (): bool => (bool) $this->selectedInvoice !== null && ($this->selectedInvoice['can_collect_payment'] ?? false)),
             ApplyDepositAction::make()
                 ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $this->selectedInvoiceId]))
                 ->visible(fn (): bool => $this->selectedInvoiceId !== null),
