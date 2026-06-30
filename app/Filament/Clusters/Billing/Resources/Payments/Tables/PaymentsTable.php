@@ -30,7 +30,7 @@ class PaymentsTable
     {
         return $table
             ->columns(self::columns())
-            ->filters(self::filters(), layout: FiltersLayout::AboveContent)
+            ->filters(self::filters(), layout: FiltersLayout::AboveContentCollapsible)
             ->recordActions(self::recordActions())
             ->defaultSort('received_at', 'desc');
     }

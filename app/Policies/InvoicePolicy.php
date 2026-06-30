@@ -44,7 +44,6 @@ class InvoicePolicy
             return false;
         }
 
-
         return $this->sameBranch($user, $invoice);
     }
 
