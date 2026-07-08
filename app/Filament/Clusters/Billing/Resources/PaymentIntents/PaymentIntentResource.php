@@ -13,12 +13,15 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Pages\Lis
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Pages\ViewPaymentIntent;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Tables\PaymentIntentsTable;
 use Modules\Billing\Models\PaymentIntent;
+use Modules\Core\Enums\NavigationGroup;
 
 class PaymentIntentResource extends Resource
 {
     protected static ?string $model = PaymentIntent::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::BILLING;
 
     protected static ?string $cluster = BillingCluster::class;
 

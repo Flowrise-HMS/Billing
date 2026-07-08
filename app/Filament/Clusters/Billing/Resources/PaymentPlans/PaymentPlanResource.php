@@ -16,12 +16,15 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\Schemas\Pay
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\Schemas\PaymentPlanInfolist;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentPlans\Tables\PaymentPlansTable;
 use Modules\Billing\Models\PaymentPlan;
+use Modules\Core\Enums\NavigationGroup;
 
 class PaymentPlanResource extends Resource
 {
     protected static ?string $model = PaymentPlan::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::BILLING;
 
     protected static ?string $cluster = BillingCluster::class;
 

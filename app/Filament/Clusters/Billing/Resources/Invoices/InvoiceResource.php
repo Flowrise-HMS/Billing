@@ -20,12 +20,15 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Schemas\Invoice
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Schemas\InvoiceInfolist;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\InvoicesTable;
 use Modules\Billing\Models\Invoice;
+use Modules\Core\Enums\NavigationGroup;
 
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::BILLING;
 
     protected static ?string $cluster = BillingCluster::class;
 

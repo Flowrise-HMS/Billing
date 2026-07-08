@@ -12,12 +12,15 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEvents\Pag
 use Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEvents\Pages\ViewBillingWebhookEvent;
 use Modules\Billing\Filament\Clusters\Billing\Resources\BillingWebhookEvents\Tables\BillingWebhookEventsTable;
 use Modules\Billing\Models\BillingWebhookEvent;
+use Modules\Core\Enums\NavigationGroup;
 
 class BillingWebhookEventResource extends Resource
 {
     protected static ?string $model = BillingWebhookEvent::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowRightOnRectangle;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::BILLING;
 
     protected static ?string $cluster = BillingCluster::class;
 

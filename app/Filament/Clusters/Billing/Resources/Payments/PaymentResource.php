@@ -15,12 +15,15 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\RelationManager
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Schemas\PaymentInfolist;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Payments\Tables\PaymentsTable;
 use Modules\Billing\Models\Payment;
+use Modules\Core\Enums\NavigationGroup;
 
 class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::BILLING;
 
     protected static ?string $cluster = BillingCluster::class;
 

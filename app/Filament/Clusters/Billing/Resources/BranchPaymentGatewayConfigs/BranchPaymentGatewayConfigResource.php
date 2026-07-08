@@ -22,12 +22,15 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\BranchPaymentGatewayConf
 use Modules\Billing\Filament\Clusters\Billing\Resources\BranchPaymentGatewayConfigs\Pages\ListBranchPaymentGatewayConfigs;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Core\Classes\Services\BranchService;
+use Modules\Core\Enums\NavigationGroup;
 
 class BranchPaymentGatewayConfigResource extends Resource
 {
     protected static ?string $model = BranchPaymentGatewayConfig::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::BILLING;
 
     protected static ?string $cluster = BillingCluster::class;
 

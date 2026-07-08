@@ -41,6 +41,8 @@ class BillingDesk extends Page implements HasTable
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
+    protected static string|\UnitEnum|null $navigationGroup = null;
+
     protected string $view = 'billing::filament.clusters.billing.pages.billing-desk';
 
     protected static string $layout = 'filament-panels::components.layout.base';
