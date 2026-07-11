@@ -141,9 +141,6 @@ class BillingDesk extends Page implements HasTable
                     ->openUrlInNewTab()
                     ->visible(fn () => (Auth::user()?->can('view_invoice_pdf') || Auth::user()?->can('print_invoice'))),
                 RecordInvoicePaymentAction::make()
-                    ->mountUsing(function ($action, $record): void {
-                        $action->arguments(['invoice_id' => $record?->id]);
-                    })
                     ->visible(fn ($record): bool => ! in_array($record?->status, [InvoiceStatus::Void], true)
                         && bccomp($record?->balanceDue(), '0', 2) > 0),
             ])
@@ -233,6 +230,10 @@ class BillingDesk extends Page implements HasTable
                 ->icon('heroicon-o-home')
                 ->url(filament()->getCurrentPanel()?->getUrl()),
             RecordInvoicePaymentAction::make()
+                ->fillForm(fn (): array => RecordInvoicePaymentAction::formFillState(
+                    null,
+                    ['invoice_id' => $this->selectedInvoiceId],
+                ))
                 ->visible(fn (): bool => (bool) $this->selectedInvoice !== null && ($this->selectedInvoice['can_collect_payment'] ?? false)),
             ApplyDepositAction::make()
                 ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $this->selectedInvoiceId]))

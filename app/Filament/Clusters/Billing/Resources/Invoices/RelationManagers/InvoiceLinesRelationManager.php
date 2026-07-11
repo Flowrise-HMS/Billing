@@ -88,6 +88,8 @@ class InvoiceLinesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $currency = fn (): string => (string) $this->getOwnerRecord()->currency;
+
         return $table
             ->recordTitleAttribute('description')
             ->columns([
@@ -95,17 +97,17 @@ class InvoiceLinesRelationManager extends RelationManager
                 TextColumn::make('quantity')
                     ->formatStateUsing(fn ($record): string => $record->quantity.' '.($record->unit_label_snapshot ?? '')),
                 CurrencyColumn::make('unit_price')
-                    ->currency(fn ($record) => (string) $record->invoice?->currency),
+                    ->currency($currency),
                 CurrencyColumn::make('line_total')
-                    ->currency(fn ($record) => (string) $record->invoice?->currency),
+                    ->currency($currency),
                 TextColumn::make('line_status')->badge(),
                 CurrencyColumn::make('patient_responsibility_amount')
                     ->label('Patient resp.')
-                    ->currency(fn ($record) => (string) $record->invoice?->currency)
+                    ->currency($currency)
                     ->visible(fn ($record) => $record?->patient_responsibility_amount !== null),
                 CurrencyColumn::make('insurance_expected_amount')
                     ->label('Ins. expected')
-                    ->currency(fn ($record) => (string) $record->invoice?->currency)
+                    ->currency($currency)
                     ->visible(fn ($record) => $record?->insurance_expected_amount !== null),
             ])
             ->headerActions([

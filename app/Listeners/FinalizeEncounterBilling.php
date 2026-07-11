@@ -2,6 +2,9 @@
 
 namespace Modules\Billing\Listeners;
 
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Services\EncounterInvoiceService;
@@ -10,12 +13,19 @@ use Modules\Clinical\Events\EncounterCancelled;
 use Modules\Clinical\Events\EncounterFinished;
 use Modules\Core\Support\AppSettings;
 
-class FinalizeEncounterBilling
+class FinalizeEncounterBilling implements ShouldBeUnique, ShouldQueue
 {
+    use InteractsWithQueue;
+
     public function __construct(
         protected EncounterInvoiceService $encounterInvoiceService,
         protected InvoiceIssuanceService $invoiceIssuanceService
     ) {}
+
+    public function uniqueId(EncounterFinished|EncounterCancelled $event): string
+    {
+        return 'finalize-encounter-billing:'.$event->encounter->id;
+    }
 
     public function handle(EncounterFinished|EncounterCancelled $event): void
     {

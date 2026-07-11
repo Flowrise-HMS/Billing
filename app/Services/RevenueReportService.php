@@ -332,12 +332,13 @@ class RevenueReportService
             $query->where('branch_id', $branchId);
         }
 
-        return $query->get()
-            ->map(function (Invoice $invoice) use ($atDate): ?array {
+        return $query
+            ->whereRaw('(total - amount_paid) > 0')
+            ->orderByDesc(DB::raw('(total - amount_paid)'))
+            ->limit($limit)
+            ->get()
+            ->map(function (Invoice $invoice) use ($atDate): array {
                 $balance = bcsub((string) $invoice->total, (string) $invoice->amount_paid, 2);
-                if (bccomp($balance, '0', 2) <= 0) {
-                    return null;
-                }
 
                 $anchorDate = $invoice->due_at ?? $invoice->issued_at ?? $invoice->created_at;
                 $daysOverdue = $anchorDate ? max(0, (int) $anchorDate->diffInDays($atDate, false)) : 0;
@@ -354,10 +355,6 @@ class RevenueReportService
                     'currency' => (string) $invoice->currency,
                 ];
             })
-            ->filter()
-            ->sortByDesc(fn (array $row): string => (string) $row['balance'])
-            ->take($limit)
-            ->values()
             ->all();
     }
 
@@ -373,21 +370,14 @@ class RevenueReportService
             return ['patient_amount' => '0', 'insurer_amount' => '0'];
         }
 
-        $lines = InvoiceLine::query()
+        $totals = InvoiceLine::query()
             ->whereIn('invoice_id', $invoiceIds)
-            ->get();
-
-        $patientTotal = '0';
-        $insurerTotal = '0';
-
-        foreach ($lines as $line) {
-            $patientTotal = bcadd($patientTotal, (string) ($line->patient_responsibility_amount ?? 0), 2);
-            $insurerTotal = bcadd($insurerTotal, (string) ($line->insurance_expected_amount ?? 0), 2);
-        }
+            ->selectRaw('COALESCE(SUM(patient_responsibility_amount), 0) as patient_total, COALESCE(SUM(insurance_expected_amount), 0) as insurer_total')
+            ->first();
 
         return [
-            'patient_amount' => $this->normalizeMoneyString($patientTotal),
-            'insurer_amount' => $this->normalizeMoneyString($insurerTotal),
+            'patient_amount' => $this->normalizeMoneyString((string) ($totals->patient_total ?? 0)),
+            'insurer_amount' => $this->normalizeMoneyString((string) ($totals->insurer_total ?? 0)),
         ];
     }
 

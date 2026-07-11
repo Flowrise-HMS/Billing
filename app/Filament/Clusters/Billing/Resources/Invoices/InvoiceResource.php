@@ -75,6 +75,11 @@ class InvoiceResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withoutGlobalScopes();
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes()
+            ->with([
+                'patient' => fn ($query) => $query->withoutGlobalScopes(),
+                'branch',
+            ]);
     }
 }

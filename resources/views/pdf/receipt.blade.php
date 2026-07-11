@@ -24,9 +24,9 @@
     <div class="section">
         <strong>{{ __('Receipt ID') }}:</strong> {{ $payment->id }}<br>
         <strong>{{ __('Date') }}:</strong> {{ optional($payment->received_at)->format('Y-m-d H:i') }}<br>
-        <strong>{{ __('Method') }}:</strong> {{ (string) $payment->method?->value ?? (string) $payment->method }}<br>
-        <strong>{{ __('Gateway') }}:</strong> {{ $payment->gateway }}<br>
-        <strong>{{ __('Amount') }}:</strong> {{ number_format((float) $payment->amount, 2) }} {{ $payment->currency }}
+        <strong>{{ __('Method') }}:</strong> {{ strtoupper((string) $payment->method?->value ?? (string) $payment->method) }}<br>
+        <strong>{{ __('Gateway') }}:</strong> {{ strtoupper($payment->gateway) }}<br>
+        <strong>{{ __('Amount') }}:</strong> {{ $payment->currency }} {{ number_format((float) $payment->amount, 2) }}
     </div>
 
     <div class="section">
@@ -50,7 +50,7 @@
                     <tr>
                         <td>{{ $allocation->invoiceLine?->invoice?->invoice_number ?? '-' }}</td>
                         <td>{{ $allocation->invoiceLine?->description ?? '-' }}</td>
-                        <td class="right">{{ number_format((float) $allocation->amount, 2) }} {{ $payment->currency }}</td>
+                        <td class="right">{{ $payment->currency }} {{ number_format((float) $allocation->amount, 2) }}</td>
                     </tr>
                 @empty
                     <tr>

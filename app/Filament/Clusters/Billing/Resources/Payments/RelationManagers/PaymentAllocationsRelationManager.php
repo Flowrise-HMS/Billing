@@ -15,7 +15,10 @@ class PaymentAllocationsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $currency = fn (): string => (string) $this->getOwnerRecord()->currency;
+
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['invoiceLine.invoice']))
             ->columns([
                 TextColumn::make('invoiceLine.invoice.invoice_number')
                     ->label(__('Invoice')),
@@ -26,7 +29,7 @@ class PaymentAllocationsRelationManager extends RelationManager
                     ->label(__('Line status'))
                     ->badge(),
                 CurrencyColumn::make('amount')
-                    ->currency(fn ($record) => (string) $record->invoiceLine?->invoice?->currency ?? 'GHS'),
+                    ->currency($currency),
             ])
             ->defaultSort('created_at');
     }
