@@ -47,8 +47,14 @@ class ApplyDepositAction
                     ->isNotEmpty();
             })
             ->schema(function (?Model $record = null, array $arguments = []): array {
+                $invoiceId = $record?->getKey() ?? $arguments['invoice_id'] ?? null;
+
+                if (! $invoiceId) {
+                    return [];
+                }
+
                 $invoice = Invoice::with(['lines' => fn ($q) => $q->orderBy('id')])
-                    ->findOrFail($record?->getKey() ?? $arguments['invoice_id']);
+                    ->findOrFail($invoiceId);
 
                 $deposits = app(DepositBalanceService::class)
                     ->activeDepositsForPatient((string) $invoice->patient_id, (string) $invoice->branch_id);
