@@ -248,7 +248,7 @@ class BillingDesk extends Page implements HasTable
                 ->label(__('Collect installment'))
                 ->color('success')
                 ->icon('heroicon-o-currency-dollar')
-                ->form([
+                ->schema([
                     Select::make('installment_id')
                         ->label(__('Installment'))
                         ->options(function (): array {
