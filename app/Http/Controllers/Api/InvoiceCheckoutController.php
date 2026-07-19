@@ -2,14 +2,14 @@
 
 namespace Modules\Billing\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Services\CheckoutSessionService;
+use Modules\Core\Http\Controllers\Api\ApiController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class InvoiceCheckoutController extends Controller
+class InvoiceCheckoutController extends ApiController
 {
     public function __construct(
         protected CheckoutSessionService $checkoutSessionService

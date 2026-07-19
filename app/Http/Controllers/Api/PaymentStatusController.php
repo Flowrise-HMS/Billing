@@ -2,12 +2,12 @@
 
 namespace Modules\Billing\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Modules\Billing\Models\Payment;
+use Modules\Core\Http\Controllers\Api\ApiController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class PaymentStatusController extends Controller
+class PaymentStatusController extends ApiController
 {
     public function show(string $payment): JsonResponse
     {
