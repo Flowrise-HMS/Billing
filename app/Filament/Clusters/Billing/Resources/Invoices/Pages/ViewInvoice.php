@@ -15,6 +15,7 @@ use Modules\Billing\Filament\Actions\RecordInvoicePaymentAction;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Services\InvoiceIssuanceService;
 use Modules\Billing\Services\PaymentPlanService;
+use Modules\Core\Support\SuperAdmin;
 
 class ViewInvoice extends ViewRecord
 {
@@ -45,6 +46,7 @@ class ViewInvoice extends ViewRecord
                     $this->redirect(static::getUrl(['record' => $record]));
                 }),
             Action::make('activities')
+                ->visible(fn (): bool => SuperAdmin::check())
                 ->label('Activities')
                 ->icon('heroicon-o-bell-alert')
                 ->url(fn () => InvoiceResource::getUrl('activities', ['record' => $record])),

@@ -24,6 +24,7 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource
 use Modules\Billing\Models\Invoice;
 use Modules\Core\Filament\Support\ClientIdentityColumn;
 use Modules\Core\Filament\Tables\Columns\CurrencyColumn;
+use Modules\Core\Support\SuperAdmin;
 
 class InvoicesTable
 {
@@ -154,6 +155,7 @@ class InvoicesTable
                         ->visible(fn ($record) => $record->status === InvoiceStatus::Draft),
                     DeleteAction::make(),
                     Action::make('activities')
+                        ->visible(fn (): bool => SuperAdmin::check())
                         ->label('Activities')
                         ->icon('heroicon-o-bell-alert')
                         ->url(fn ($record) => InvoiceResource::getUrl('activities', ['record' => $record])),
