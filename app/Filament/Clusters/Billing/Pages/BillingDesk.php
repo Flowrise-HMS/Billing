@@ -30,6 +30,8 @@ use Modules\Billing\Models\PaymentPlanInstallment;
 use Modules\Billing\Services\PaymentPlanService;
 use Modules\Core\Classes\Services\BranchService;
 use Modules\Core\Settings\FeatureSettings;
+use Modules\Patient\Classes\Services\PatientSearchService;
+use Modules\Patient\Models\Patient;
 
 class BillingDesk extends Page implements HasTable
 {
@@ -145,31 +147,23 @@ class BillingDesk extends Page implements HasTable
                         && bccomp($record?->balanceDue(), '0', 2) > 0),
             ])
             ->filters([
-                Filter::make('patient')
+                SelectFilter::make('patient_id')
                     ->label(__('Patient'))
-                    ->columns(1)
-                    ->columnSpanFull()
-                    ->schema([
-                        TextInput::make('search')
-                            ->label(__('Search patient'))
-                            ->placeholder(__('Name, MRN, phone or email...'))
-                            ->live(onBlur: true),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        if (blank($data['search'] ?? null)) {
-                            return $query;
-                        }
-                        $search = $data['search'];
-
-                        return $query->whereHas('patient', fn (Builder $q): Builder => $q
-                            ->where('mrn', 'like', "%{$search}%")
-                            ->orWhere('first_name', 'like', "%{$search}%")
-                            ->orWhere('middle_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%")
-                        );
-                    }),
+                    ->placeholder(__('Search patient...'))
+                    ->relationship('patient', 'mrn')
+                    ->getOptionLabelFromRecordUsing(fn (?Patient $record): ?string => $record?->display_name)
+                    ->searchable()
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return app(PatientSearchService::class)
+                            ->search($search, 50)
+                            ->mapWithKeys(fn (Patient $patient): array => [
+                                $patient->getKey() => $patient->display_name,
+                            ])
+                            ->all();
+                    })
+                    ->getOptionLabelUsing(fn ($value): ?string => filled($value)
+                        ? Patient::query()->find($value)?->display_name
+                        : null),
                 Filter::make('created_at')
                     ->label(__('Created date'))
                     ->columns(2)

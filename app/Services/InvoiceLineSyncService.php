@@ -5,19 +5,23 @@ namespace Modules\Billing\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Billing\Enums\InvoiceLineStatus;
+use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Events\InvoiceLineAdded;
 use Modules\Billing\Events\InvoiceLineUpdated;
+use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Clinical\Enums\RequestItemStatus;
 use Modules\Clinical\Models\RequestItem;
 use Modules\Core\Contracts\InsurancePricingResolver;
+use Modules\Core\Enums\ServiceCategoryCode;
 
 class InvoiceLineSyncService
 {
     public function __construct(
         protected EncounterInvoiceService $encounterInvoiceService,
         protected InvoiceTotalsService $totalsService,
-        protected InsurancePricingResolver $insurancePricing
+        protected InsurancePricingResolver $insurancePricing,
+        protected InvoiceIssuanceService $invoiceIssuanceService,
     ) {}
 
     public function syncFromRequestItem(RequestItem $item): void
@@ -92,5 +96,40 @@ class InvoiceLineSyncService
 
             $this->totalsService->recalculate($invoice->fresh(['lines']));
         });
+
+        $this->issueDraftInvoiceForMedicationItem($item, $invoice->fresh(['lines']));
+    }
+
+    protected function issueDraftInvoiceForMedicationItem(RequestItem $item, Invoice $invoice): void
+    {
+        if ($invoice->status !== InvoiceStatus::Draft) {
+            return;
+        }
+
+        if (bccomp((string) $invoice->total, '0', 2) <= 0) {
+            return;
+        }
+
+        if (! $this->isMedicationRequestItem($item)) {
+            return;
+        }
+
+        $this->invoiceIssuanceService->issue($invoice);
+    }
+
+    protected function isMedicationRequestItem(RequestItem $item): bool
+    {
+        $item->loadMissing(['prescriptionDetail', 'service.category']);
+
+        if ($item->prescriptionDetail !== null) {
+            return true;
+        }
+
+        $categoryCode = $item->service?->category?->code;
+
+        return $categoryCode === ServiceCategoryCode::MED
+            || $categoryCode === ServiceCategoryCode::MED->value
+            || $categoryCode === ServiceCategoryCode::PHA
+            || $categoryCode === ServiceCategoryCode::PHA->value;
     }
 }
