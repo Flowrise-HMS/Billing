@@ -16,5 +16,6 @@ return [
         'download_invoice' => 'Download Invoice',
         'print_receipt' => 'Print Receipt',
         'download_receipt' => 'Download Receipt',
+        'manage_billing_settings' => 'ManageBillingSettings',
     ],
 ];
