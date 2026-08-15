@@ -26,6 +26,11 @@ use Modules\Patient\Models\Patient;
  * @property string|null $guest_name
  * @property string|null $guest_phone
  * @property string|null $guest_email
+ * @property-read Encounter|null $encounter
+ * @property-read Appointment|null $appointment
+ *
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsTo encounter()
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsTo appointment()
  */
 class Invoice extends BaseModel implements ProvidesClientIdentity
 {
@@ -127,16 +132,6 @@ class Invoice extends BaseModel implements ProvidesClientIdentity
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
-    }
-
-    public function encounter(): BelongsTo
-    {
-        return $this->belongsTo(Encounter::class);
-    }
-
-    public function appointment(): BelongsTo
-    {
-        return $this->belongsTo(Appointment::class);
     }
 
     public function lines(): HasMany

@@ -9,26 +9,33 @@ use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Events\InvoiceCreated;
 use Modules\Billing\Models\Invoice;
-use Modules\Clinical\Models\Encounter;
+use Modules\Core\Contracts\EncounterInvoiceContract;
+use Modules\Core\Support\OptionalClass;
 
-class EncounterInvoiceService
+class EncounterInvoiceService implements EncounterInvoiceContract
 {
     public function __construct(
         protected InvoiceTotalsService $totalsService
     ) {}
 
-    public function ensureDraftInvoiceForEncounter(Encounter $encounter): Invoice
+    public function ensureDraftInvoiceForEncounter(object $encounter): Invoice
     {
         return DB::transaction(function () use ($encounter) {
-            $encounter->loadMissing('branch');
+            if (method_exists($encounter, 'loadMissing')) {
+                $encounter->loadMissing('branch');
+            }
 
-            // Lock encounter row to serialize concurrent requests
-            Encounter::query()->withoutGlobalScopes()
-                ->where('id', $encounter->id)
-                ->lockForUpdate()
-                ->first();
+            OptionalClass::when(
+                'Modules\\Clinical\\Models\\Encounter',
+                function (string $encounterClass) use ($encounter): void {
+                    $encounterClass::query()->withoutGlobalScopes()
+                        ->where('id', $encounter->id)
+                        ->lockForUpdate()
+                        ->first();
+                },
+                'Clinical',
+            );
 
-            // Re-check for existing draft after acquiring lock
             $existing = Invoice::query()->withoutGlobalScopes()
                 ->where('encounter_id', $encounter->id)
                 ->where('status', InvoiceStatus::Draft)
@@ -64,7 +71,7 @@ class EncounterInvoiceService
         });
     }
 
-    public function markEncounterDischarged(Encounter $encounter): void
+    public function markEncounterDischarged(object $encounter): void
     {
         Invoice::query()->withoutGlobalScopes()
             ->where('encounter_id', $encounter->id)

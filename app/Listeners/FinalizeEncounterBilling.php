@@ -7,10 +7,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Models\Invoice;
-use Modules\Billing\Services\EncounterInvoiceService;
 use Modules\Billing\Services\InvoiceIssuanceService;
 use Modules\Clinical\Events\EncounterCancelled;
 use Modules\Clinical\Events\EncounterFinished;
+use Modules\Core\Contracts\EncounterInvoiceContract;
 use Modules\Core\Support\AppSettings;
 
 class FinalizeEncounterBilling implements ShouldBeUnique, ShouldQueue
@@ -18,7 +18,7 @@ class FinalizeEncounterBilling implements ShouldBeUnique, ShouldQueue
     use InteractsWithQueue;
 
     public function __construct(
-        protected EncounterInvoiceService $encounterInvoiceService,
+        protected EncounterInvoiceContract $encounterInvoiceService,
         protected InvoiceIssuanceService $invoiceIssuanceService
     ) {}
 

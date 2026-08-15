@@ -5,8 +5,8 @@ namespace Modules\Billing\Listeners;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Modules\Billing\Services\InvoiceLineSyncService;
 use Modules\Clinical\Events\RequestItemCreated;
+use Modules\Core\Contracts\InvoiceLineSyncContract;
 use Modules\Core\Support\AppSettings;
 
 class SyncRequestItemCreatedToInvoice implements ShouldBeUnique, ShouldQueue
@@ -14,7 +14,7 @@ class SyncRequestItemCreatedToInvoice implements ShouldBeUnique, ShouldQueue
     use InteractsWithQueue;
 
     public function __construct(
-        protected InvoiceLineSyncService $invoiceLineSyncService
+        protected InvoiceLineSyncContract $invoiceLineSyncService
     ) {}
 
     public function uniqueId(RequestItemCreated $event): string

@@ -13,9 +13,13 @@ use Modules\Billing\Observers\InvoiceLineObserver;
 use Modules\Billing\Policies\BranchPaymentGatewayConfigPolicy;
 use Modules\Billing\Policies\InvoicePolicy;
 use Modules\Billing\Policies\PaymentPolicy;
+use Modules\Billing\Services\EncounterInvoiceService;
+use Modules\Billing\Services\InvoiceLineSyncService;
 use Modules\Billing\Services\PatientFinancialHoldService;
-use Modules\Clinical\Models\Encounter;
+use Modules\Core\Contracts\EncounterInvoiceContract;
+use Modules\Core\Contracts\InvoiceLineSyncContract;
 use Modules\Core\Contracts\PatientFinancialHoldChecker;
+use Modules\Core\Support\OptionalClass;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class BillingServiceProvider extends ModuleServiceProvider
@@ -38,6 +42,8 @@ class BillingServiceProvider extends ModuleServiceProvider
         parent::register();
 
         $this->app->bind(PatientFinancialHoldChecker::class, PatientFinancialHoldService::class);
+        $this->app->bind(EncounterInvoiceContract::class, EncounterInvoiceService::class);
+        $this->app->bind(InvoiceLineSyncContract::class, InvoiceLineSyncService::class);
     }
 
     public function boot(): void
@@ -52,9 +58,38 @@ class BillingServiceProvider extends ModuleServiceProvider
 
         InvoiceLine::observe(InvoiceLineObserver::class);
         $this->registerCommandSchedules();
-        Encounter::resolveRelationUsing('invoices', function (Encounter $encounter) {
-            return $encounter->hasMany(Invoice::class);
-        });
+        OptionalClass::when(
+            'Modules\\Clinical\\Models\\Encounter',
+            function (string $encounterClass): void {
+                $encounterClass::resolveRelationUsing('invoices', function ($encounter) {
+                    return $encounter->hasMany(Invoice::class, 'encounter_id', 'id');
+                });
+            },
+            'Clinical',
+        );
+
+        OptionalClass::when(
+            'Modules\\Patient\\Models\\Patient',
+            function (string $patientClass): void {
+                $patientClass::resolveRelationUsing('invoices', function ($patient) {
+                    return $patient->hasMany(Invoice::class, 'patient_id', 'id');
+                });
+                $patientClass::resolveRelationUsing('payments', function ($patient) {
+                    return $patient->hasMany(Payment::class, 'patient_id', 'id');
+                });
+            },
+            'Patient',
+        );
+
+        OptionalClass::when(
+            'Modules\\Clinical\\Models\\RequestItem',
+            function (string $requestItemClass): void {
+                $requestItemClass::resolveRelationUsing('invoiceLine', function ($item) {
+                    return $item->morphOne(InvoiceLine::class, 'billable', 'billable_type', 'billable_id', 'id');
+                });
+            },
+            'Clinical',
+        );
     }
 
     /**

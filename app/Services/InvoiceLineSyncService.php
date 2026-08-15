@@ -10,21 +10,21 @@ use Modules\Billing\Events\InvoiceLineAdded;
 use Modules\Billing\Events\InvoiceLineUpdated;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
-use Modules\Clinical\Enums\RequestItemStatus;
-use Modules\Clinical\Models\RequestItem;
+use Modules\Core\Contracts\EncounterInvoiceContract;
 use Modules\Core\Contracts\InsurancePricingResolver;
+use Modules\Core\Contracts\InvoiceLineSyncContract;
 use Modules\Core\Enums\ServiceCategoryCode;
 
-class InvoiceLineSyncService
+class InvoiceLineSyncService implements InvoiceLineSyncContract
 {
     public function __construct(
-        protected EncounterInvoiceService $encounterInvoiceService,
+        protected EncounterInvoiceContract $encounterInvoiceService,
         protected InvoiceTotalsService $totalsService,
         protected InsurancePricingResolver $insurancePricing,
         protected InvoiceIssuanceService $invoiceIssuanceService,
     ) {}
 
-    public function syncFromRequestItem(RequestItem $item): void
+    public function syncFromRequestItem(object $item): void
     {
         $request = $item->serviceRequest;
         if (! $request || ! $request->encounter_id) {
@@ -45,7 +45,10 @@ class InvoiceLineSyncService
                 ->first();
 
             $lineTotal = (string) $item->total_price;
-            $status = $item->status === RequestItemStatus::CANCELLED
+            $statusValue = is_object($item->status) && isset($item->status->value)
+                ? $item->status->value
+                : $item->status;
+            $status = $statusValue === 'cancelled'
                 ? InvoiceLineStatus::Void
                 : InvoiceLineStatus::Unpaid;
 
@@ -100,7 +103,7 @@ class InvoiceLineSyncService
         $this->issueDraftInvoiceForMedicationItem($item, $invoice->fresh(['lines']));
     }
 
-    protected function issueDraftInvoiceForMedicationItem(RequestItem $item, Invoice $invoice): void
+    protected function issueDraftInvoiceForMedicationItem(object $item, Invoice $invoice): void
     {
         if ($invoice->status !== InvoiceStatus::Draft) {
             return;
@@ -117,7 +120,7 @@ class InvoiceLineSyncService
         $this->invoiceIssuanceService->issue($invoice);
     }
 
-    protected function isMedicationRequestItem(RequestItem $item): bool
+    protected function isMedicationRequestItem(object $item): bool
     {
         $item->loadMissing(['prescriptionDetail', 'service.category']);
 
