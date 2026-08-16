@@ -3,6 +3,7 @@
 namespace Modules\Billing\Filament\Actions;
 
 use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
@@ -19,11 +20,15 @@ class WriteOffLinesAction
             ->label(__('Write off'))
             ->icon(Heroicon::OutlinedDocumentMinus)
             ->color('gray')
-            ->requiresConfirmation()
             ->modalHeading(__('Write off line'))
             ->modalDescription(__('This will adjust the remaining balance to zero (no money exchanged).'))
+            ->schema([
+                TextInput::make('reason')
+                    ->label(__('Reason'))
+                    ->required(),
+            ])
             ->hidden(fn () => ! Auth::user()?->can('Create Payment'))
-            ->action(function (array $arguments, PaymentRecordingService $service): void {
+            ->action(function (array $data, array $arguments, PaymentRecordingService $service): void {
                 $lineId = $arguments['line_id'] ?? null;
                 if (! $lineId) {
                     return;
@@ -56,7 +61,7 @@ class WriteOffLinesAction
                     patientId: $line->invoice->patient_id,
                     branchId: (string) $line->invoice->branch_id,
                     recordedBy: Auth::id(),
-                    metadata: ['source' => 'filament', 'action' => 'write_off'],
+                    metadata: ['source' => 'filament', 'action' => 'write_off', 'reason' => $data['reason'] ?? null],
                     type: PaymentType::WriteOff,
                 );
 
