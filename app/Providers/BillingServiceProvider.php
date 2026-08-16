@@ -8,6 +8,7 @@ use Modules\Billing\Console\FlagOverdueInvoices;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
+use Modules\Billing\Models\PatientDeposit;
 use Modules\Billing\Models\Payment;
 use Modules\Billing\Observers\InvoiceLineObserver;
 use Modules\Billing\Policies\BranchPaymentGatewayConfigPolicy;
@@ -76,6 +77,9 @@ class BillingServiceProvider extends ModuleServiceProvider
                 });
                 $patientClass::resolveRelationUsing('payments', function ($patient) {
                     return $patient->hasMany(Payment::class, 'patient_id', 'id');
+                });
+                $patientClass::resolveRelationUsing('deposits', function ($patient) {
+                    return $patient->hasMany(PatientDeposit::class, 'patient_id', 'id');
                 });
             },
             'Patient',
