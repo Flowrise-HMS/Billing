@@ -2,13 +2,17 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Pages;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Services\MonthlyRevenueService;
 use Modules\Core\Models\Branch;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MonthlyRevenueSummary extends Page
 {
@@ -44,7 +48,7 @@ class MonthlyRevenueSummary extends Page
         }
 
         $branch = Branch::query()->findOrFail($this->branchId);
-        $this->summary = app(MonthlyRevenueService::class)->monthly($branch, \Illuminate\Support\Carbon::parse($this->month));
+        $this->summary = app(MonthlyRevenueService::class)->monthly($branch, Carbon::parse($this->month));
     }
 
     /**
@@ -55,7 +59,7 @@ class MonthlyRevenueSummary extends Page
         return Branch::query()->orderBy('name')->pluck('name', 'id')->all();
     }
 
-    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportCsv(): StreamedResponse
     {
         $summary = $this->summary;
 
@@ -72,9 +76,9 @@ class MonthlyRevenueSummary extends Page
         }, 'monthly-revenue-'.$this->month.'.csv', ['Content-Type' => 'text/csv']);
     }
 
-    public function exportPdf(): \Symfony\Component\HttpFoundation\Response
+    public function exportPdf(): Response
     {
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billing::pdf.monthly-revenue-summary', [
+        $pdf = Pdf::loadView('billing::pdf.monthly-revenue-summary', [
             'month' => $this->month,
             'branch' => Branch::query()->find($this->branchId),
             'summary' => $this->summary,

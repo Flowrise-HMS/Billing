@@ -6,6 +6,8 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
+use Modules\Billing\Database\Factories\InvoiceFactory;
+use Modules\Billing\Database\Factories\InvoiceLineFactory;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Enums\PaymentMethod;
@@ -15,6 +17,7 @@ use Modules\Billing\Models\Payment;
 use Modules\Billing\Services\MonthlyRevenueService;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Core\Models\Branch;
+use Modules\Core\Support\ModuleAvailability;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
 use Tests\TestCase;
@@ -24,6 +27,7 @@ class MonthlyRevenueServiceTest extends TestCase
     use DatabaseTransactions;
 
     private Branch $branch;
+
     private User $cashier;
 
     protected function setUp(): void
@@ -71,7 +75,7 @@ class MonthlyRevenueServiceTest extends TestCase
 
         $out = app(MonthlyRevenueService::class)->monthly($this->branch, $date);
 
-        if (\Modules\Core\Support\ModuleAvailability::insuranceEnabled()) {
+        if (ModuleAvailability::insuranceEnabled()) {
             $this->assertArrayHasKey('insurance_split', $out);
         } else {
             $this->assertArrayNotHasKey('insurance_split', $out);
@@ -82,7 +86,7 @@ class MonthlyRevenueServiceTest extends TestCase
     {
         $date = CarbonImmutable::parse('2026-08-15');
         $patient = Patient::withoutEvents(fn () => PatientFactory::new()->create(['branch_id' => $this->branch->id]));
-        $invoice = Invoice::withoutEvents(fn () => \Modules\Billing\Database\Factories\InvoiceFactory::new()->create([
+        $invoice = Invoice::withoutEvents(fn () => InvoiceFactory::new()->create([
             'organization_id' => $this->branch->organization_id,
             'branch_id' => $this->branch->id,
             'patient_id' => $patient->id,
@@ -92,7 +96,7 @@ class MonthlyRevenueServiceTest extends TestCase
             'issued_at' => $date,
         ]));
 
-        $line = \Modules\Billing\Database\Factories\InvoiceLineFactory::new()->create([
+        $line = InvoiceLineFactory::new()->create([
             'invoice_id' => $invoice->id,
             'quantity' => 1,
             'unit_price' => '100.00',

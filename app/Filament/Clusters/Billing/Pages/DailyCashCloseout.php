@@ -2,17 +2,21 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Pages;
 
-use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use Carbon\CarbonInterface;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Enums\DailyCashSummaryStatus;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Models\DailyCashSummary;
 use Modules\Billing\Services\DailyCashCloseoutService;
 use Modules\Core\Models\Branch;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DailyCashCloseout extends Page
 {
@@ -150,7 +154,7 @@ class DailyCashCloseout extends Page
         $this->loadCloseout();
     }
 
-    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportCsv(): StreamedResponse
     {
         $rows = $this->cashiers;
 
@@ -171,9 +175,9 @@ class DailyCashCloseout extends Page
         }, 'daily-cash-closeout-'.$this->summaryDate.'.csv', ['Content-Type' => 'text/csv']);
     }
 
-    public function exportPdf(): \Symfony\Component\HttpFoundation\Response
+    public function exportPdf(): Response
     {
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billing::pdf.daily-cash-closeout', [
+        $pdf = Pdf::loadView('billing::pdf.daily-cash-closeout', [
             'summaryDate' => $this->summaryDate,
             'branch' => Branch::query()->find($this->branchId),
             'cashiers' => $this->cashiers,
@@ -190,8 +194,8 @@ class DailyCashCloseout extends Page
         return Branch::query()->orderBy('name')->pluck('name', 'id')->all();
     }
 
-    private function date(): \Carbon\CarbonInterface
+    private function date(): CarbonInterface
     {
-        return \Illuminate\Support\Carbon::parse($this->summaryDate);
+        return Carbon::parse($this->summaryDate);
     }
 }

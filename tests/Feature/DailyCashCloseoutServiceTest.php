@@ -6,6 +6,8 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
+use Modules\Billing\Database\Factories\InvoiceFactory;
+use Modules\Billing\Database\Factories\InvoiceLineFactory;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Enums\PaymentMethod;
@@ -24,6 +26,7 @@ class DailyCashCloseoutServiceTest extends TestCase
     use DatabaseTransactions;
 
     private Branch $branch;
+
     private User $cashier;
 
     protected function setUp(): void
@@ -117,7 +120,7 @@ class DailyCashCloseoutServiceTest extends TestCase
     {
         $patient = Patient::withoutEvents(fn () => PatientFactory::new()->create(['branch_id' => $this->branch->id]));
 
-        $invoice = Invoice::withoutEvents(fn () => \Modules\Billing\Database\Factories\InvoiceFactory::new()->create([
+        $invoice = Invoice::withoutEvents(fn () => InvoiceFactory::new()->create([
             'organization_id' => $this->branch->organization_id,
             'branch_id' => $this->branch->id,
             'patient_id' => $patient->id,
@@ -127,7 +130,7 @@ class DailyCashCloseoutServiceTest extends TestCase
             'issued_at' => now(),
         ]));
 
-        $line = \Modules\Billing\Database\Factories\InvoiceLineFactory::new()->create([
+        $line = InvoiceLineFactory::new()->create([
             'invoice_id' => $invoice->id,
             'quantity' => 1,
             'unit_price' => '100.00',

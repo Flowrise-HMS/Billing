@@ -3,7 +3,6 @@
 namespace Modules\Billing\Services;
 
 use Carbon\CarbonInterface;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\PaymentType;
 use Modules\Billing\Models\Payment;

@@ -3,6 +3,7 @@
 namespace Modules\Billing\Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Enums\DailyCashSummaryStatus;
 use Modules\Billing\Models\DailyCashSummary;
@@ -51,7 +52,7 @@ class DailyCashSummaryModelTest extends TestCase
             'summary_date' => '2026-08-15',
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         DailyCashSummary::create([
             'branch_id' => $branch->id,
