@@ -134,4 +134,9 @@ class Payment extends Model implements ProvidesClientIdentity
 
         return $query;
     }
+
+    public function scopeRevenue(Builder $query): Builder
+    {
+        return $query->where('type', PaymentType::Payment);
+    }
 }
