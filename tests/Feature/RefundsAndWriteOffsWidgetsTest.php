@@ -9,14 +9,15 @@ use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Enums\PaymentType;
-use Modules\Billing\Filament\Clusters\Billing\Pages\RefundsAndWriteOffs;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\RefundsTableWidget;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\WriteOffsTableWidget;
 use Modules\Billing\Models\Payment;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Patient\Database\Factories\PatientFactory;
 use Modules\Patient\Models\Patient;
 use Tests\TestCase;
 
-class RefundsAndWriteOffsPageTest extends TestCase
+class RefundsAndWriteOffsWidgetsTest extends TestCase
 {
     use DatabaseTransactions;
 
@@ -26,22 +27,13 @@ class RefundsAndWriteOffsPageTest extends TestCase
         $this->migrateModules(['Core', 'Patient', 'Billing']);
     }
 
-    public function test_page_renders(): void
-    {
-        $user = User::factory()->create();
-        Gate::before(fn () => true);
-
-        Livewire::actingAs($user)
-            ->test(RefundsAndWriteOffs::class)
-            ->assertOk();
-    }
-
-    public function test_page_renders_with_data(): void
+    public function test_refunds_widget_is_searchable_by_client_and_reason(): void
     {
         $user = User::factory()->create();
         Gate::before(fn () => true);
 
         $branch = BranchFactory::new()->create();
+
         $patient = Patient::withoutEvents(
             fn () => PatientFactory::new()->create([
                 'branch_id' => $branch->id,
@@ -51,7 +43,7 @@ class RefundsAndWriteOffsPageTest extends TestCase
             ])
         );
 
-        Payment::create([
+        $refund = Payment::create([
             'patient_id' => $patient->id,
             'branch_id' => $branch->id,
             'method' => PaymentMethod::Gateway,
@@ -64,7 +56,34 @@ class RefundsAndWriteOffsPageTest extends TestCase
             'metadata' => ['reason' => 'Overcharge', 'original_payment_id' => 'orig-1'],
         ]);
 
-        Payment::create([
+        Livewire::actingAs($user)
+            ->test(RefundsTableWidget::class)
+            ->assertCanSeeTableRecords([$refund])
+            ->searchTable('Ama')
+            ->assertCanSeeTableRecords([$refund])
+            ->searchTable('Overcharge')
+            ->assertCanSeeTableRecords([$refund])
+            ->searchTable('NoMatchXYZ')
+            ->assertCanNotSeeTableRecords([$refund]);
+    }
+
+    public function test_write_offs_widget_is_searchable_by_client(): void
+    {
+        $user = User::factory()->create();
+        Gate::before(fn () => true);
+
+        $branch = BranchFactory::new()->create();
+
+        $patient = Patient::withoutEvents(
+            fn () => PatientFactory::new()->create([
+                'branch_id' => $branch->id,
+                'first_name' => 'Kojo',
+                'last_name' => 'Asante',
+                'mrn' => 'FR-WO-KOJO-002',
+            ])
+        );
+
+        $writeOff = Payment::create([
             'patient_id' => $patient->id,
             'branch_id' => $branch->id,
             'method' => PaymentMethod::Cash,
@@ -77,7 +96,11 @@ class RefundsAndWriteOffsPageTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(RefundsAndWriteOffs::class)
-            ->assertOk();
+            ->test(WriteOffsTableWidget::class)
+            ->assertCanSeeTableRecords([$writeOff])
+            ->searchTable('Kojo')
+            ->assertCanSeeTableRecords([$writeOff])
+            ->searchTable('NoMatchXYZ')
+            ->assertCanNotSeeTableRecords([$writeOff]);
     }
 }
