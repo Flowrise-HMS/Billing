@@ -35,7 +35,10 @@ class TopOutstandingInvoicesTableWidget extends BaseWidget
             ->columns([
                 TextColumn::make('invoice_number')
                     ->label(__('Invoice #')),
-                ClientIdentityColumn::make(resolve: fn (array $record): ClientIdentity => ClientIdentity::fromArray($record['client'] ?? [])),
+                ClientIdentityColumn::make(
+                    resolve: fn (array $record): ClientIdentity => ClientIdentity::fromArray($record['client'] ?? []),
+                    searchable: false,
+                ),
                 TextColumn::make('branch_name')
                     ->label(__('Branch')),
                 TextColumn::make('issued_at')

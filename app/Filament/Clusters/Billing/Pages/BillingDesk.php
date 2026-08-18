@@ -307,7 +307,7 @@ class BillingDesk extends Page implements HasTable
                         plan: $plan,
                         installment: $installment,
                         amount: (string) $data['amount'],
-                        method: PaymentMethod::tryFrom($data['method'] ?? 'cash') ?? PaymentMethod::Cash,
+                        method: enum_try_from(PaymentMethod::class, $data['method'] ?? 'cash') ?? PaymentMethod::Cash,
                         gateway: $data['method'] ?? 'cash',
                         reference: $data['reference'] ?? null,
                     );

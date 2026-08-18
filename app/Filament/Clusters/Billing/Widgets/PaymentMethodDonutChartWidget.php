@@ -33,7 +33,7 @@ class PaymentMethodDonutChartWidget extends ChartWidget
 
         $labels = [];
         foreach ($methods as $row) {
-            $method = PaymentMethod::tryFrom((string) $row['method']);
+            $method = enum_try_from(PaymentMethod::class, $row['method']);
             $labels[] = $method?->getLabel() ?? (string) $row['method'];
         }
 

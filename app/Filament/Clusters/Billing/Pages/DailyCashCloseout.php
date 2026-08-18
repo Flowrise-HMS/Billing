@@ -10,8 +10,10 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 use Modules\Billing\Enums\DailyCashSummaryStatus;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
+use Modules\Billing\Filament\Clusters\Billing\Widgets\TillReconciliationTableWidget;
 use Modules\Billing\Models\DailyCashSummary;
 use Modules\Billing\Services\DailyCashCloseoutService;
 use Modules\Core\Models\Branch;
@@ -152,6 +154,52 @@ class DailyCashCloseout extends Page
         ]);
 
         $this->loadCloseout();
+    }
+
+    #[On('closeout.countedClosingUpdated')]
+    public function onCountedClosingUpdated(string $countedClosing): void
+    {
+        $this->countedClosing = $countedClosing;
+        $this->loadCloseout();
+    }
+
+    #[On('closeout.finalize')]
+    public function onFinalizeCashier(?string $countedClosing = null): void
+    {
+        $this->countedClosing = $countedClosing ?? $this->countedClosing;
+        $this->finalizeCashier();
+    }
+
+    #[On('closeout.reopen')]
+    public function onReopenCashier(): void
+    {
+        $this->reopenCashier();
+    }
+
+    /**
+     * @return array<class-string, array<string, mixed>>
+     */
+    public function getTillReconciliationWidgets(): array
+    {
+        return [
+            TillReconciliationTableWidget::make([
+                'closeoutPayload' => $this->getCloseoutPayload(),
+            ]),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getCloseoutPayload(): array
+    {
+        return [
+            'summary_date' => $this->summaryDate,
+            'branch_id' => $this->branchId,
+            'opening_cash' => $this->openingCash,
+            'counted_closing' => $this->countedClosing,
+            'cashiers' => $this->cashiers,
+        ];
     }
 
     public function exportCsv(): StreamedResponse

@@ -34,7 +34,7 @@ class InvoicesTable
             ->columns([
                 TextColumn::make('#')->rowIndex(),
                 TextColumn::make('invoice_number')->copyable()->searchable()->sortable(),
-                ClientIdentityColumn::make(),
+                ClientIdentityColumn::make(includeGuestSearch: true),
                 TextColumn::make('invoice_type')
                     ->label(__('Type'))
                     ->badge()

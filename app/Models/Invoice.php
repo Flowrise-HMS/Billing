@@ -9,8 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Modules\Appointment\Models\Appointment;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
+use Modules\Clinical\Models\Encounter;
 use Modules\Core\Contracts\ProvidesClientIdentity;
 use Modules\Core\Models\BaseModel;
 use Modules\Core\Models\Branch;
@@ -24,8 +26,8 @@ use Modules\Patient\Models\Patient;
  * @property string|null $guest_name
  * @property string|null $guest_phone
  * @property string|null $guest_email
- * @property-read \Modules\Clinical\Models\Encounter|null $encounter
- * @property-read \Modules\Appointment\Models\Appointment|null $appointment
+ * @property-read Encounter|null $encounter
+ * @property-read Appointment|null $appointment
  *
  * @method \Illuminate\Database\Eloquent\Relations\BelongsTo encounter()
  * @method \Illuminate\Database\Eloquent\Relations\BelongsTo appointment()

@@ -32,7 +32,7 @@ class PaymentMethodBreakdownTableWidget extends BaseWidget
             ->columns([
                 TextColumn::make('method')
                     ->label(__('Method'))
-                    ->formatStateUsing(fn (mixed $state): string => PaymentMethod::tryFrom((string) $state)?->getLabel() ?? (string) $state),
+                    ->formatStateUsing(fn (mixed $state): string => enum_try_from(PaymentMethod::class, $state)?->getLabel() ?? (string) $state),
                 CurrencyColumn::make('total_collected')
                     ->label(__('Collected'))
                     ->summarize($this->reportMoneySumSummarizer('total_collected')),

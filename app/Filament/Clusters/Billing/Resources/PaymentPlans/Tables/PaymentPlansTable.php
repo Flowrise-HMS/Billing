@@ -37,6 +37,8 @@ class PaymentPlansTable
                 ->sortable(),
             ClientIdentityColumn::make(
                 resolve: fn (PaymentPlan $record) => $record->invoice?->clientIdentity(),
+                patientRelation: 'invoice.patient',
+                includeGuestSearch: true,
             ),
             CurrencyColumn::make('total_amount')
                 ->currency(fn (PaymentPlan $record): string => $record->invoice?->currency ?? 'GHS'),

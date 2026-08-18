@@ -86,7 +86,7 @@ class RecordInvoicePaymentAction
                     return null;
                 }
 
-                $methodEnum = PaymentMethod::tryFrom($data['payment_method'] ?? 'cash') ?? PaymentMethod::Cash;
+                $methodEnum = enum_try_from(PaymentMethod::class, $data['payment_method'] ?? 'cash') ?? PaymentMethod::Cash;
 
                 $metadata = ['source' => 'billing_desk'];
                 if (! empty($data['reference'])) {
