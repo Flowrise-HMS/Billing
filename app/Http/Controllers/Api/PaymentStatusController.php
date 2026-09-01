@@ -9,12 +9,20 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PaymentStatusController extends ApiController
 {
+    /**
+     * Payment does not extend BaseModel, so no branch global scope applies to it.
+     * Without the explicit branch constraint below, any authenticated token could
+     * read any branch's payment by guessing an id.
+     */
     public function show(string $payment): JsonResponse
     {
-        $model = Payment::query()->find($payment);
+        $model = $this->branchScoped(Payment::query())->find($payment);
+
         if (! $model) {
             throw new NotFoundHttpException;
         }
+
+        $this->authorizeApi('view', $model);
 
         return response()->json([
             'id' => $model->id,
