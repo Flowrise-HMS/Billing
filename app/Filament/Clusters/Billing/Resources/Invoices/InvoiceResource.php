@@ -8,6 +8,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\CreateInvoice;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\EditInvoice;
@@ -33,6 +34,26 @@ class InvoiceResource extends Resource
     protected static ?string $cluster = BillingCluster::class;
 
     protected static ?string $recordTitleAttribute = 'invoice_number';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['invoice_number', 'patient.mrn', 'patient.first_name', 'patient.middle_name', 'patient.last_name'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return array_filter([
+            'Patient' => $record->patient?->full_name,
+            'Status' => $record->status?->getLabel(),
+            'Total' => $record->currency !== null ? "{$record->currency} {$record->total}" : $record->total,
+            'Issued' => $record->issued_at?->format('d M Y'),
+        ]);
+    }
+
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with('patient');
+    }
 
     public static function form(Schema $schema): Schema
     {

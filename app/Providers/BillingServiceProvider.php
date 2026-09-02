@@ -5,6 +5,7 @@ namespace Modules\Billing\Providers;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Modules\Billing\Console\FlagOverdueInvoices;
+use Modules\Billing\Filament\Widgets\PatientBillingSummaryWidget;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
@@ -17,10 +18,13 @@ use Modules\Billing\Policies\PaymentPolicy;
 use Modules\Billing\Services\EncounterInvoiceService;
 use Modules\Billing\Services\InvoiceLineSyncService;
 use Modules\Billing\Services\PatientFinancialHoldService;
+use Modules\Core\Classes\Support\PageWidgetsRegistry;
 use Modules\Core\Contracts\EncounterInvoiceContract;
 use Modules\Core\Contracts\InvoiceLineSyncContract;
 use Modules\Core\Contracts\PatientFinancialHoldChecker;
+use Modules\Core\Support\ModuleAvailability;
 use Modules\Core\Support\OptionalClass;
+use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class BillingServiceProvider extends ModuleServiceProvider
@@ -93,6 +97,40 @@ class BillingServiceProvider extends ModuleServiceProvider
                 });
             },
             'Clinical',
+        );
+
+        $this->registerClinicalWorkspaceWidgets();
+    }
+
+    /**
+     * Contribute the outstanding-balance card to the Clinical Workspace's
+     * patient banner. The page is referenced by string so Billing never
+     * imports Clinical (module boundary rule).
+     */
+    protected function registerClinicalWorkspaceWidgets(): void
+    {
+        if (! $this->app->bound(PageWidgetsRegistry::class)) {
+            return;
+        }
+
+        if (! Module::isEnabled('Clinical') || ! ModuleAvailability::billingEnabled()) {
+            return;
+        }
+
+        $clinicalWorkspace = 'Modules\\Clinical\\Filament\\Clusters\\Workspace\\Pages\\ClinicalWorkspace';
+
+        if (! class_exists($clinicalWorkspace)) {
+            return;
+        }
+
+        $this->app->make(PageWidgetsRegistry::class)->register(
+            $clinicalWorkspace,
+            'patient_banner',
+            function (): array {
+                $widget = OptionalClass::whenCanView(PatientBillingSummaryWidget::class);
+
+                return $widget ? [$widget] : [];
+            },
         );
     }
 
