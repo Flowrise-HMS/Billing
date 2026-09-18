@@ -3,6 +3,7 @@
 namespace Modules\Billing\Tests\Feature;
 
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\TillReconciliationTableWidget;
@@ -52,12 +53,14 @@ class TillReconciliationTableWidgetTest extends TestCase
         $payload = $this->buildPayload();
 
         Livewire::actingAs(User::factory()->create())
-            ->test(TillReconciliationTableWidget::class)
-            ->set('closeoutPayload', $payload)
+            // `closeoutPayload` is a #[Reactive] prop: it can only be supplied by the
+            // parent (DailyCashCloseout), so mount with it rather than ->set() it.
+            ->test(TillReconciliationTableWidget::class, ['closeoutPayload' => $payload])
             ->assertSeeText('Kofi Mensah')
             ->assertSeeText('200.00')
             ->assertSeeText('500.00')
-            ->assertSeeText('300.00');
+            // Counted closing is an editable input, so its value is state rather than text.
+            ->assertTableColumnStateSet('counted_closing', '300.00', record: '0');
     }
 
     public function test_open_status_shows_finalize_action_not_reopen(): void
@@ -65,10 +68,11 @@ class TillReconciliationTableWidgetTest extends TestCase
         $payload = $this->buildPayload(status: 'open');
 
         Livewire::actingAs(User::factory()->create())
-            ->test(TillReconciliationTableWidget::class)
-            ->set('closeoutPayload', $payload)
-            ->assertSeeText('Finalize')
-            ->assertDontSeeText('Reopen');
+            // `closeoutPayload` is a #[Reactive] prop: it can only be supplied by the
+            // parent (DailyCashCloseout), so mount with it rather than ->set() it.
+            ->test(TillReconciliationTableWidget::class, ['closeoutPayload' => $payload])
+            ->assertActionVisible(TestAction::make('finalize')->table('0'))
+            ->assertActionHidden(TestAction::make('reopen')->table('0'));
     }
 
     public function test_finalized_status_shows_reopen_action_not_finalize(): void
@@ -76,10 +80,12 @@ class TillReconciliationTableWidgetTest extends TestCase
         $payload = $this->buildPayload(status: 'finalized');
 
         Livewire::actingAs(User::factory()->create())
-            ->test(TillReconciliationTableWidget::class)
-            ->set('closeoutPayload', $payload)
-            ->assertSeeText('Reopen')
-            ->assertDontSeeText('Finalize');
+            // `closeoutPayload` is a #[Reactive] prop: it can only be supplied by the
+            // parent (DailyCashCloseout), so mount with it rather than ->set() it.
+            ->test(TillReconciliationTableWidget::class, ['closeoutPayload' => $payload])
+            // "Finalize" would also match the "Finalized" status badge, so check the actions themselves.
+            ->assertActionVisible(TestAction::make('reopen')->table('0'))
+            ->assertActionHidden(TestAction::make('finalize')->table('0'));
     }
 
     public function test_variance_is_displayed(): void
@@ -87,8 +93,9 @@ class TillReconciliationTableWidgetTest extends TestCase
         $payload = $this->buildPayload();
 
         Livewire::actingAs(User::factory()->create())
-            ->test(TillReconciliationTableWidget::class)
-            ->set('closeoutPayload', $payload)
+            // `closeoutPayload` is a #[Reactive] prop: it can only be supplied by the
+            // parent (DailyCashCloseout), so mount with it rather than ->set() it.
+            ->test(TillReconciliationTableWidget::class, ['closeoutPayload' => $payload])
             ->assertSeeText('340.00');
     }
 }

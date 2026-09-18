@@ -70,7 +70,11 @@ class PatientDepositBalancesTableWidget extends BaseWidget
                     ->options(PatientDepositStatus::class)
                     ->attribute('status'),
             ], layout: FiltersLayout::AboveContentCollapsible)
-            ->defaultSort('remaining', 'desc')
+            // Grouped by patient_id: Filament's implicit `ORDER BY <table>.id` key sort is
+            // not an aggregate and fails under MySQL's only_full_group_by, so order on the
+            // grouping column for a stable secondary sort instead.
+            ->defaultKeySort(false)
+            ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('remaining')->orderBy('patient_id'))
             ->paginated([10, 25, 50, 100])
             ->emptyStateHeading(__('No deposit balances'));
     }
