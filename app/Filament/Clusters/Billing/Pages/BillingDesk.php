@@ -29,6 +29,7 @@ use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\PaymentPlanInstallment;
 use Modules\Billing\Services\PaymentPlanService;
 use Modules\Core\Classes\Services\BranchService;
+use Modules\Core\Enums\SidebarGroup;
 use Modules\Core\Settings\FeatureSettings;
 use Modules\Patient\Classes\Services\PatientSearchService;
 use Modules\Patient\Models\Patient;
@@ -37,13 +38,11 @@ class BillingDesk extends Page implements HasTable
 {
     use HasPageShield, InteractsWithTable;
 
-    // protected static ?string $cluster = Billing  Cluster::class;
-
-    protected static ?int $navigationSort = -3;
+    protected static ?int $navigationSort = 40;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
-    protected static string|\UnitEnum|null $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = SidebarGroup::Workspaces;
 
     protected string $view = 'billing::filament.clusters.billing.pages.billing-desk';
 
