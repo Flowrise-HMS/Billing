@@ -8,10 +8,10 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Modules\Billing\Enums\PaymentMethod;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\PaymentPlan;
 use Modules\Billing\Models\PaymentPlanInstallment;
+use Modules\Billing\Support\PaymentMethodOptions;
 
 class PaymentPlanForm
 {
@@ -117,8 +117,8 @@ class PaymentPlanForm
                 ->required(),
             Select::make('method')
                 ->label(__('Payment method'))
-                ->options(PaymentMethod::class)
-                ->default(PaymentMethod::Cash->value)
+                ->options(fn (): array => PaymentMethodOptions::options())
+                ->default(fn (): string => PaymentMethodOptions::default())
                 ->required(),
             TextInput::make('reference')
                 ->label(__('Reference'))

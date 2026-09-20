@@ -23,7 +23,7 @@
 
     <div class="section">
         <strong>{{ __('Receipt ID') }}:</strong> {{ $payment->id }}<br>
-        <strong>{{ __('Date') }}:</strong> {{ optional($payment->received_at)->format('Y-m-d H:i') }}<br>
+        <strong>{{ __('Date') }}:</strong> {{ pdf_date($payment->received_at) }}<br>
         <strong>{{ __('Method') }}:</strong> {{ strtoupper((string) $payment->method?->value ?? (string) $payment->method) }}<br>
         <strong>{{ __('Gateway') }}:</strong> {{ strtoupper($payment->gateway) }}<br>
         <strong>{{ __('Amount') }}:</strong> {{ $payment->currency }} {{ number_format((float) $payment->amount, 2) }}

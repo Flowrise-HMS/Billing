@@ -27,10 +27,10 @@
         <strong>{{ __('Invoice #') }}:</strong> {{ $invoice->invoice_number }}<br>
         <strong>{{ __('Status') }}:</strong> {{ $invoice->status?->getLabel() ?? $invoice->status }}<br>
         @if($invoice->issued_at)
-            <strong>{{ __('Issued') }}:</strong> {{ $invoice->issued_at->format('Y-m-d H:i') }}<br>
+            <strong>{{ __('Issued') }}:</strong> {{ pdf_date($invoice->issued_at) }}<br>
         @endif
         @if($invoice->encounter_discharged_at)
-            <strong>{{ __('Encounter discharged') }}:</strong> {{ $invoice->encounter_discharged_at->format('Y-m-d H:i') }}<br>
+            <strong>{{ __('Encounter discharged') }}:</strong> {{ pdf_date($invoice->encounter_discharged_at) }}<br>
         @endif
         <strong>{{ __('Currency') }}:</strong> {{ $invoice->currency }}
     </div>
@@ -102,7 +102,10 @@
     </div>
 
     <div class="section muted">
-        {{ __('Generated on') }} {{ now()->format('Y-m-d H:i') }}
+        {{ __('Generated on') }} {{ pdf_date(now()) }}
+        @if ($footerText = app_settings()->pdfFooterText())
+            <br>{{ $footerText }}
+        @endif
     </div>
 </body>
 </html>

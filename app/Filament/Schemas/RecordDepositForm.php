@@ -5,7 +5,7 @@ namespace Modules\Billing\Filament\Schemas;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Modules\Billing\Enums\PaymentMethod;
+use Modules\Billing\Support\PaymentMethodOptions;
 use Modules\Patient\Models\Patient;
 
 class RecordDepositForm
@@ -31,8 +31,8 @@ class RecordDepositForm
                 ->required(),
             Select::make('method')
                 ->label(__('Payment method'))
-                ->options(PaymentMethod::class)
-                ->default(PaymentMethod::Cash->value)
+                ->options(fn (): array => PaymentMethodOptions::options())
+                ->default(fn (): string => PaymentMethodOptions::default())
                 ->required(),
             TextInput::make('reference')
                 ->label(__('Reference'))

@@ -113,7 +113,7 @@ class Invoice extends BaseModel implements ProvidesClientIdentity
 
             $branchFrag = substr(md5((string) $branchId), 0, 8);
 
-            return sprintf('INV-%s-%s-%05d', now()->format('Ymd'), $branchFrag, $next);
+            return sprintf('%s-%s-%s-%05d', document_prefix('invoice'), now()->format('Ymd'), $branchFrag, $next);
         });
     }
 

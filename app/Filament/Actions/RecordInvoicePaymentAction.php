@@ -25,6 +25,7 @@ use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\Payment;
 use Modules\Billing\Services\InvoiceAllocationBuilder;
 use Modules\Billing\Services\PaymentRecordingService;
+use Modules\Billing\Support\PaymentMethodOptions;
 
 class RecordInvoicePaymentAction
 {
@@ -303,12 +304,8 @@ class RecordInvoicePaymentAction
             Grid::make(2)->schema([
                 Select::make('payment_method')
                     ->label(__('Payment method'))
-                    ->options(
-                        collect(PaymentMethod::cases())
-                            ->reject(fn ($method) => $method === PaymentMethod::Gateway)
-                            ->mapWithKeys(fn ($method) => [$method->value => $method->getLabel()])
-                    )
-                    ->default(PaymentMethod::Cash->value)
+                    ->options(fn (): array => PaymentMethodOptions::options())
+                    ->default(fn (): string => PaymentMethodOptions::default())
                     ->required()
                     ->live(),
 

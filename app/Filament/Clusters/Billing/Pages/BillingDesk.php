@@ -28,6 +28,7 @@ use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Tables\Invoices
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\PaymentPlanInstallment;
 use Modules\Billing\Services\PaymentPlanService;
+use Modules\Billing\Support\PaymentMethodOptions;
 use Modules\Core\Classes\Services\BranchService;
 use Modules\Core\Enums\SidebarGroup;
 use Modules\Core\Settings\FeatureSettings;
@@ -284,8 +285,8 @@ class BillingDesk extends Page implements HasTable
                         ->required(),
                     Select::make('method')
                         ->label(__('Payment method'))
-                        ->options(PaymentMethod::class)
-                        ->default(PaymentMethod::Cash->value)
+                        ->options(fn (): array => PaymentMethodOptions::options())
+                        ->default(fn (): string => PaymentMethodOptions::default())
                         ->required(),
                     TextInput::make('reference')
                         ->label(__('Reference'))

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Core\Models\Branch;
+use Modules\Core\Settings\NumberingSettings;
 use Modules\Patient\Models\Patient;
 use Tests\TestCase;
 
@@ -50,5 +51,13 @@ class BillingModelTest extends TestCase
 
         $this->assertNotNull($number);
         $this->assertStringStartsWith('INV-', $number);
+    }
+
+    public function test_invoice_number_uses_the_configured_prefix(): void
+    {
+        NumberingSettings::fake(['invoice_prefix' => 'ZZ']);
+        $branch = Branch::factory()->create();
+
+        $this->assertStringStartsWith('ZZ-', Invoice::generateInvoiceNumber($branch->id));
     }
 }
