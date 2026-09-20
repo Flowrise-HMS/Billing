@@ -24,6 +24,16 @@ class RefundsRegisterResource extends Resource
 
     protected static ?string $cluster = BillingCluster::class;
 
+    protected static ?string $slug = 'refunds-register';
+
+    protected static ?string $navigationLabel = 'Refunds register';
+
+    protected static ?string $modelLabel = 'refund';
+
+    protected static ?string $pluralModelLabel = 'refunds';
+
+    protected static ?int $navigationSort = 30;
+
     protected static bool $canCreate = false;
 
     public static function table(Table $table): Table

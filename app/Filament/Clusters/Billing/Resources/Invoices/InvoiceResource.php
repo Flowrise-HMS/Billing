@@ -33,6 +33,12 @@ class InvoiceResource extends Resource
 
     protected static ?string $cluster = BillingCluster::class;
 
+    /**
+     * Lowest sort in the cluster (others default to -1), so the Billing group
+     * comes first and /billing opens on Invoices.
+     */
+    protected static ?int $navigationSort = -10;
+
     protected static ?string $recordTitleAttribute = 'invoice_number';
 
     public static function getGloballySearchableAttributes(): array
