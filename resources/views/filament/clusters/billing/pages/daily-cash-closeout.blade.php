@@ -5,6 +5,7 @@
                    class="rounded-lg border-gray-300 dark:border-gray-600">
             <select wire:model="branchId" wire:change="loadCloseout"
                     class="rounded-lg border-gray-300 dark:border-gray-600">
+                <option value="">{{ __('Select branch') }}</option>
                 @foreach ($this->branches as $id => $name)
                     <option value="{{ $id }}">{{ $name }}</option>
                 @endforeach

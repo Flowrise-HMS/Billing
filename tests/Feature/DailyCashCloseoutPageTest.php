@@ -40,6 +40,20 @@ class DailyCashCloseoutPageTest extends TestCase
             ->assertOk();
     }
 
+    public function test_page_defaults_to_the_session_branch_and_loads_the_closeout(): void
+    {
+        $user = $this->actingAsUser();
+        $user->forceFill(['branch_id' => null])->save();
+        $branch = BranchFactory::new()->create();
+        session(['current_branch_id' => $branch->id]);
+
+        Livewire::actingAs($user)
+            ->test(DailyCashCloseout::class)
+            ->assertOk()
+            ->assertSet('branchId', $branch->id)
+            ->assertSet('cashiers.'.$user->id.'.cashier_name', $user->name);
+    }
+
     public function test_finalize_creates_locked_summary(): void
     {
         $user = $this->actingAsUser();

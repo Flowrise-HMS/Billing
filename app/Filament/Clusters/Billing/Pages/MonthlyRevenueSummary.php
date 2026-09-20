@@ -7,9 +7,10 @@ use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Services\MonthlyRevenueService;
+use Modules\Core\Classes\Services\BranchService;
+use Modules\Core\Enums\NavigationGroup;
 use Modules\Core\Models\Branch;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -21,6 +22,14 @@ class MonthlyRevenueSummary extends Page
     protected static ?string $cluster = BillingCluster::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::REPORTS;
+
+    protected static ?string $navigationLabel = 'Monthly revenue summary';
+
+    protected static ?string $title = 'Monthly revenue summary';
+
+    protected static ?int $navigationSort = 30;
 
     protected string $view = 'billing::filament.clusters.billing.pages.monthly-revenue-summary';
 
@@ -36,7 +45,10 @@ class MonthlyRevenueSummary extends Page
     public function mount(): void
     {
         $this->month = request()->query('month', now()->format('Y-m'));
-        $this->branchId = request()->query('branch_id', Auth::user()?->branch_id);
+        // Session branch → user's home branch → default branch, so users without
+        // a home branch (super admins) still get a populated page.
+        $this->branchId = request()->query('branch_id') ?? app(BranchService::class)->getDefaultBranchId();
+        $this->loadSummary();
     }
 
     public function loadSummary(): void

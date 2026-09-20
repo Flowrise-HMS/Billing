@@ -21,6 +21,7 @@ use Modules\Billing\Filament\Clusters\Billing\Widgets\RecentPaymentsTableWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\RevenueTrendChartWidget;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\TopOutstandingInvoicesTableWidget;
 use Modules\Billing\Services\RevenueReportService;
+use Modules\Core\Enums\NavigationGroup;
 use Modules\Core\Models\Branch;
 
 class RevenueReport extends Page
@@ -30,6 +31,14 @@ class RevenueReport extends Page
     protected static ?string $cluster = BillingCluster::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedPresentationChartBar;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::REPORTS;
+
+    protected static ?string $navigationLabel = 'Revenue report';
+
+    protected static ?string $title = 'Revenue report';
+
+    protected static ?int $navigationSort = 10;
 
     protected string $view = 'billing::filament.clusters.billing.pages.revenue-report';
 

@@ -16,6 +16,8 @@ use Modules\Billing\Filament\Clusters\Billing\BillingCluster;
 use Modules\Billing\Filament\Clusters\Billing\Widgets\TillReconciliationTableWidget;
 use Modules\Billing\Models\DailyCashSummary;
 use Modules\Billing\Services\DailyCashCloseoutService;
+use Modules\Core\Classes\Services\BranchService;
+use Modules\Core\Enums\NavigationGroup;
 use Modules\Core\Models\Branch;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -28,6 +30,14 @@ class DailyCashCloseout extends Page
     protected static ?string $cluster = BillingCluster::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::REPORTS;
+
+    protected static ?string $navigationLabel = 'Daily cash closeout';
+
+    protected static ?string $title = 'Daily cash closeout';
+
+    protected static ?int $navigationSort = 20;
 
     protected string $view = 'billing::filament.clusters.billing.pages.daily-cash-closeout';
 
@@ -54,7 +64,10 @@ class DailyCashCloseout extends Page
     public function mount(): void
     {
         $this->summaryDate = request()->query('summary_date', now()->toDateString());
-        $this->branchId = request()->query('branch_id', Auth::user()?->branch_id);
+        // Session branch → user's home branch → default branch, so users without
+        // a home branch (super admins) still get a populated page.
+        $this->branchId = request()->query('branch_id') ?? app(BranchService::class)->getDefaultBranchId();
+        $this->loadCloseout();
     }
 
     public function loadCloseout(): void
@@ -98,7 +111,7 @@ class DailyCashCloseout extends Page
                 'variance' => $this->countedClosing !== null
                     ? bcsub($this->countedClosing, $expected, 2)
                     : '0',
-                'status' => $summary?->status->value ?? DailyCashSummaryStatus::Open->value,
+                'status' => enum_value($summary?->status) ?? DailyCashSummaryStatus::Open->value,
             ],
         ];
     }
