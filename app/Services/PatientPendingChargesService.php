@@ -49,7 +49,7 @@ class PatientPendingChargesService
             'invoice_line_id' => (string) $line->id,
             'invoice_id' => (string) $line->invoice_id,
             'invoice_number' => $line->invoice?->invoice_number,
-            'invoice_status' => $line->invoice?->status?->value ?? '',
+            'invoice_status' => enum_value($line->invoice?->status) ?? '',
             'request_item_id' => (string) $line->billable_id,
             'service_id' => $line->service_id !== null ? (string) $line->service_id : null,
             'name' => $line->description ?: ($line->billable?->service?->name ?? 'Service'),
