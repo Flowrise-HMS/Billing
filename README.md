@@ -41,8 +41,8 @@ flowchart LR
 - Record and allocate payments (full or partial).
 - Record patient **deposits** (prepaid credit) and **apply** them to issued invoices.
 - Create **payment plans** (installment schedules) on issued invoices and collect installments.
-- Refund payments and write off invoice lines (Refunds register, which renders in the cluster menu as a second **Payments** item because `RefundsRegisterResource` sets no label; **Refunds And Write Offs** report).
-- Generate receipts, invoice PDFs, and revenue exports; run the finance report pages (Revenue Report, Daily Cash Closeout with per-till finalize/reopen, Monthly Revenue Summary, **Deposits And Outstanding**). The report pages carry no navigation group, so they render ungrouped at the top of the cluster menu and `/billing` opens on Daily Cash Closeout.
+- Refund payments and write off invoice lines (**Refunds register**, `/billing/refunds-register`; **Refunds & write-offs** report).
+- Generate receipts, invoice PDFs, and revenue exports; run the finance report pages in the **Reports** sub-group (Revenue report, Daily cash closeout with per-till finalize/reopen, Monthly revenue summary, Deposits & outstanding, Refunds & write-offs). Invoices carries the lowest navigation sort, so `/billing` opens on Invoices. Manual payment forms offer only the methods enabled in Billing settings (`Modules\Billing\Support\PaymentMethodOptions`).
 - Work the cashier queue on the **Billing Desk** (Workspaces sidebar group; feature toggle "Billing desk").
 - Manage per-branch payment gateway settings (Paystack, Stripe, Flutterwave, Hubtel; keys stored encrypted per branch).
 - Process payment webhooks and checkout session flows (Payment intents, Webhook events).
@@ -63,7 +63,7 @@ flowchart LR
 |------|---------|
 | `app/Models/` | Invoice, InvoiceLine, Payment, PaymentAllocation, PatientDeposit, DepositApplication, PaymentPlan, PaymentPlanInstallment, PaymentIntent, BillingWebhookEvent, BranchPaymentGatewayConfig, DailyCashSummary. |
 | `app/Services/` | 20+ services: totals, issuance, checkout, payment recording, deposits (recording/application), payment plans, refunds, write-offs, financial hold (`PatientFinancialHoldService`, bound to Core's `PatientFinancialHoldChecker`), pending charges, receipts, revenue reporting, daily cash summaries. |
-| `app/Settings/BillingSettings.php` | Auto-issue on discharge, auto-sync request items, auto-invoice on check-in, financial hold, SMS, reminder cooldown; the allowed/default payment method fields are stored but the payment forms currently offer every non-gateway method. |
+| `app/Settings/BillingSettings.php` | Auto-issue on discharge, auto-sync request items, auto-invoice on check-in, financial hold, SMS, reminder cooldown; enabled/default payment methods (applied to every manual payment form via `PaymentMethodOptions`). |
 | `app/Gateways/` | Payment gateway manager plus provider drivers (Paystack via [musheabdulhakim/paystack](https://musheabdulhakim.github.io/Paystack/), Stripe, Flutterwave, Hubtel). |
 | `app/Events/` + `app/Listeners/` | Lifecycle events and sync/finalization listeners. |
 | `app/Filament/` | **Billing** cluster (Finance sidebar group) with resources Invoices, Payments, PaymentIntents, BillingWebhookEvents, PaymentPlans, PatientDeposits, RefundsRegister, BranchPaymentGatewayConfigs ("Gateway settings"); pages BillingDesk (top-level, Workspaces group), RevenueReport, DailyCashCloseout, MonthlyRevenueSummary, DepositsAndOutstanding, RefundsAndWriteOffs, ManageBillingSettings; shared actions (Collect payment, Apply deposit, Record deposit, Refund, Write off); widgets; relation managers for Patient (invoices, payments, deposits) and Encounter (invoices); `PatientBillingSummaryWidget` for the Clinical workspace; exporters. |
