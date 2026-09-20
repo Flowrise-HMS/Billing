@@ -44,4 +44,35 @@ class PatientDepositResourceTest extends TestCase
             ->assertOk()
             ->assertSee('50.00');
     }
+
+    public function test_record_deposit_action_opens_and_records_a_deposit(): void
+    {
+        $user = User::factory()->create();
+        Gate::before(fn () => true);
+        $branch = BranchFactory::new()->create();
+        $user->forceFill(['branch_id' => $branch->id])->save();
+        $patient = Patient::withoutEvents(fn () => PatientFactory::new()->create(['branch_id' => $branch->id]));
+
+        // Opening the modal used to fail with "Unknown column patients.display_name".
+        Livewire::actingAs($user)
+            ->test(ListPatientDeposits::class)
+            ->mountAction('recordDeposit')
+            ->assertActionMounted('recordDeposit')
+            ->callMountedAction()
+            ->assertHasFormErrors(['patient_id', 'amount']);
+
+        Livewire::actingAs($user)
+            ->test(ListPatientDeposits::class)
+            ->callAction('recordDeposit', data: [
+                'patient_id' => (string) $patient->id,
+                'amount' => '25.00',
+                'method' => PaymentMethod::Cash->value,
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertDatabaseHas('patient_deposits', [
+            'patient_id' => $patient->id,
+            'amount' => '25.00',
+        ]);
+    }
 }

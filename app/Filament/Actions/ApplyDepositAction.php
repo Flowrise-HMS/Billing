@@ -124,8 +124,7 @@ class ApplyDepositAction
                     ->send();
 
                 return $payment;
-            })
-            ->model(Payment::class);
+            });
     }
 
     /**

@@ -6,6 +6,7 @@ use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Modules\Billing\Enums\PaymentMethod;
+use Modules\Patient\Models\Patient;
 
 class RecordDepositForm
 {
@@ -17,8 +18,9 @@ class RecordDepositForm
         return [
             Select::make('patient_id')
                 ->label(__('Patient'))
-                ->relationship('patient', 'display_name')
-                ->searchable()
+                ->relationship('patient', 'mrn')
+                ->getOptionLabelFromRecordUsing(fn (Patient $record): string => $record->full_name.' ('.$record->mrn.')')
+                ->searchable(['mrn', 'first_name', 'last_name'])
                 ->preload()
                 ->default($defaultPatientId)
                 ->required(),

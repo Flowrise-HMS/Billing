@@ -28,6 +28,11 @@ use Modules\Billing\Services\PaymentRecordingService;
 
 class RecordInvoicePaymentAction
 {
+    /**
+     * The action must not declare ->model(Payment::class): Filament drops the
+     * injected $record when it is not an instance of the declared model, which
+     * left the invoice unresolved on the invoice view and list pages.
+     */
     public static function make(): Action
     {
         return Action::make('collectPayment')
@@ -133,8 +138,7 @@ class RecordInvoicePaymentAction
                     ->send();
 
                 return $payment;
-            })
-            ->model(Payment::class);
+            });
     }
 
     /**
