@@ -4,10 +4,12 @@ namespace Modules\Billing\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Modules\Billing\Events\InvoiceIssued;
+use Modules\Billing\Events\InvoiceLineAdded;
 use Modules\Billing\Events\UnpaidBillingNoticeRequired;
 use Modules\Billing\Listeners\FinalizeEncounterBilling;
 use Modules\Billing\Listeners\HandleAppointmentCheckInBilling;
 use Modules\Billing\Listeners\SendInvoiceIssuedNotifications;
+use Modules\Billing\Listeners\SendInvoiceLineOrderedNotifications;
 use Modules\Billing\Listeners\SendUnpaidBillingNotifications;
 use Modules\Billing\Listeners\SyncRequestItemCreatedToInvoice;
 use Modules\Billing\Listeners\SyncRequestItemUpdatedToInvoice;
@@ -30,6 +32,9 @@ class EventServiceProvider extends ServiceProvider
         $listen = [
             InvoiceIssued::class => [
                 SendInvoiceIssuedNotifications::class,
+            ],
+            InvoiceLineAdded::class => [
+                SendInvoiceLineOrderedNotifications::class,
             ],
             UnpaidBillingNoticeRequired::class => [
                 SendUnpaidBillingNotifications::class,

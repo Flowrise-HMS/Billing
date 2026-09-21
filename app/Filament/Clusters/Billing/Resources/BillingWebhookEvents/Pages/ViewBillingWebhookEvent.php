@@ -40,7 +40,9 @@ class ViewBillingWebhookEvent extends ViewRecord
                                 : __('Pending')),
                         TextEntry::make('created_at')->dateTime(),
                         TextEntry::make('metadata')
-                            ->json()
+                            ->formatStateUsing(function (mixed $state): string {
+                                return json_encode(is_array($state) ? $state : ['value' => $state], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}';
+                            })
                             ->visible(fn ($state) => ! empty($state)),
                     ]),
             ]);

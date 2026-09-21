@@ -75,4 +75,29 @@ class PatientDepositResourceTest extends TestCase
             'amount' => '25.00',
         ]);
     }
+
+    public function test_record_deposit_uses_the_session_branch_for_users_without_a_home_branch(): void
+    {
+        $user = User::factory()->create(['branch_id' => null]);
+        Gate::before(fn () => true);
+        $branch = BranchFactory::new()->create();
+        $patient = Patient::withoutEvents(fn () => PatientFactory::new()->create(['branch_id' => $branch->id]));
+        session(['current_branch_id' => $branch->id]);
+
+        Livewire::actingAs($user)
+            ->test(ListPatientDeposits::class)
+            ->callAction('recordDeposit', data: [
+                'patient_id' => (string) $patient->id,
+                'amount' => '50.00',
+                'method' => PaymentMethod::Cash->value,
+            ])
+            ->assertHasNoActionErrors()
+            ->assertNotified('Deposit recorded');
+
+        $this->assertDatabaseHas('patient_deposits', [
+            'patient_id' => $patient->id,
+            'branch_id' => $branch->id,
+            'amount' => '50.00',
+        ]);
+    }
 }

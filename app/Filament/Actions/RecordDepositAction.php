@@ -8,6 +8,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Billing\Filament\Schemas\RecordDepositForm;
 use Modules\Billing\Services\DepositRecordingService;
+use Modules\Core\Support\CurrentBranch;
 
 class RecordDepositAction
 {
@@ -24,9 +25,23 @@ class RecordDepositAction
                 $arguments['patient_id'] ?? null
             ))
             ->action(function (array $data, DepositRecordingService $deposits): void {
+                // Context, session branch, home branch, then the default branch:
+                // super admins have no home branch of their own.
+                $branchId = CurrentBranch::id();
+
+                if (blank($branchId)) {
+                    Notification::make()
+                        ->danger()
+                        ->title(__('Branch required'))
+                        ->body(__('Switch to a branch before recording a deposit.'))
+                        ->send();
+
+                    return;
+                }
+
                 $deposits->record(
                     patientId: $data['patient_id'],
-                    branchId: Auth::user()?->branch_id ?? throw new \RuntimeException('No branch context.'),
+                    branchId: (string) $branchId,
                     amount: (string) $data['amount'],
                     method: $data['method'],
                     reference: $data['reference'] ?? null,

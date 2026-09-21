@@ -161,11 +161,14 @@ class RecordInvoicePaymentAction
 
         $preSelectedLineId = $arguments['line_id'] ?? null;
 
+        // fillForm() replaces the whole state, so the field default is not
+        // applied on its own: seed the configured payment method here too.
         return [
             'invoice_id' => $invoiceId,
             'payment_mode' => $preSelectedLineId ? 'selected' : 'full',
             'amount' => $invoice->balanceDue(),
             'line_items' => self::payableLineItemsForInvoice($invoice, $preSelectedLineId),
+            'payment_method' => PaymentMethodOptions::default(),
         ];
     }
 

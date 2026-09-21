@@ -18,6 +18,31 @@ use Modules\Billing\Services\DepositBalanceService;
 
 class ApplyDepositAction
 {
+    /**
+     * Offered only for an open invoice with a balance whose patient holds an
+     * active deposit at the invoice's branch. Pages that override the action's
+     * visibility must keep this rule.
+     */
+    public static function isAvailableForInvoice(?string $invoiceId): bool
+    {
+        if (blank($invoiceId)) {
+            return false;
+        }
+
+        $invoice = Invoice::query()->find($invoiceId);
+        if (! $invoice || in_array($invoice->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)) {
+            return false;
+        }
+
+        if (bccomp($invoice->balanceDue(), '0', 2) <= 0) {
+            return false;
+        }
+
+        return app(DepositBalanceService::class)
+            ->activeDepositsForPatient((string) $invoice->patient_id, (string) $invoice->branch_id)
+            ->isNotEmpty();
+    }
+
     public static function make(): Action
     {
         return Action::make('applyDeposit')
@@ -27,25 +52,9 @@ class ApplyDepositAction
             ->modalHeading(__('Apply deposit to invoice'))
             ->modalWidth('2xl')
             ->hidden(fn () => ! Auth::user()?->can('Create Payment'))
-            ->visible(function (?Model $record = null, array $arguments = []): bool {
-                $invoiceId = $record?->getKey() ?? $arguments['invoice_id'] ?? null;
-                if (! $invoiceId) {
-                    return false;
-                }
-
-                $invoice = Invoice::query()->find($invoiceId);
-                if (! $invoice || in_array($invoice->status, [InvoiceStatus::Draft, InvoiceStatus::Void], true)) {
-                    return false;
-                }
-
-                if (bccomp($invoice->balanceDue(), '0', 2) <= 0) {
-                    return false;
-                }
-
-                return app(DepositBalanceService::class)
-                    ->activeDepositsForPatient((string) $invoice->patient_id, (string) $invoice->branch_id)
-                    ->isNotEmpty();
-            })
+            ->visible(fn (?Model $record = null, array $arguments = []): bool => self::isAvailableForInvoice(
+                $record?->getKey() ?? $arguments['invoice_id'] ?? null,
+            ))
             ->schema(function (?Model $record = null, array $arguments = []): array {
                 $invoiceId = $record?->getKey() ?? $arguments['invoice_id'] ?? null;
 

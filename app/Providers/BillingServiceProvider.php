@@ -2,8 +2,11 @@
 
 namespace Modules\Billing\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Modules\Billing\Console\FlagOverdueInvoices;
 use Modules\Billing\Filament\Widgets\PatientBillingSummaryWidget;
 use Modules\Billing\Models\BranchPaymentGatewayConfig;
@@ -63,6 +66,7 @@ class BillingServiceProvider extends ModuleServiceProvider
 
         InvoiceLine::observe(InvoiceLineObserver::class);
         $this->registerCommandSchedules();
+        $this->registerRateLimiter();
         OptionalClass::when(
             'Modules\\Clinical\\Models\\Encounter',
             function (string $encounterClass): void {
@@ -142,6 +146,21 @@ class BillingServiceProvider extends ModuleServiceProvider
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
             $schedule->command('invoices:check-overdue')->dailyAt('08:00');
+        });
+    }
+
+    /**
+     * Defense-in-depth for the public pay-line link: a valid signature is
+     * required just to reach the route, so this isn't an anti-guessing
+     * measure — it bounds how much real gateway API traffic a single leaked
+     * or scraped link can generate.
+     */
+    protected function registerRateLimiter(): void
+    {
+        RateLimiter::for('billing-pay-line', function (Request $request) {
+            $perMinute = (int) config('billing.public_pay_link.rate_limit_per_minute', 10);
+
+            return Limit::perMinute($perMinute)->by($request->ip() ?? 'billing-pay-line');
         });
     }
 }

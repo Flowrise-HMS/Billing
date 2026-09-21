@@ -12,11 +12,13 @@ use Modules\Billing\Enums\InvoiceLineStatus;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\InvoiceType;
 use Modules\Billing\Enums\PaymentMethod;
+use Modules\Billing\Filament\Clusters\Billing\Pages\BillingDesk;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\Pages\ViewInvoice;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Services\DepositRecordingService;
 use Modules\Billing\Services\InvoiceIssuanceService;
+use Modules\Billing\Settings\BillingSettings;
 use Modules\Core\Database\Factories\BranchFactory;
 use Modules\Core\Models\Branch;
 use Modules\Patient\Database\Factories\PatientFactory;
@@ -66,6 +68,24 @@ class InvoiceCollectPaymentActionTest extends TestCase
         ]);
     }
 
+    public function test_collect_payment_preselects_the_configured_default_method(): void
+    {
+        BillingSettings::fake([
+            'enabled_payment_methods' => ['card', 'mobile_money'],
+            'default_payment_method' => 'mobile_money',
+        ]);
+
+        $branch = BranchFactory::new()->create();
+        $user = User::factory()->create(['branch_id' => $branch->id]);
+        Context::add('current_branch_id', $branch->id);
+        $invoice = $this->issuedInvoice($branch);
+
+        Livewire::actingAs($user)
+            ->test(ViewInvoice::class, ['record' => $invoice->getRouteKey()])
+            ->mountAction('collectPayment')
+            ->assertSchemaStateSet(['payment_method' => 'mobile_money'], 'mountedActionSchema0');
+    }
+
     public function test_apply_deposit_is_offered_when_the_patient_holds_a_deposit(): void
     {
         $branch = BranchFactory::new()->create();
@@ -87,6 +107,33 @@ class InvoiceCollectPaymentActionTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(ViewInvoice::class, ['record' => $invoice->getRouteKey()])
+            ->assertActionVisible('applyDeposit');
+    }
+
+    public function test_billing_desk_applies_the_same_deposit_visibility_rule(): void
+    {
+        $branch = BranchFactory::new()->create();
+        $user = User::factory()->create(['branch_id' => $branch->id]);
+        Context::add('current_branch_id', $branch->id);
+        $invoice = $this->issuedInvoice($branch);
+
+        Livewire::actingAs($user)
+            ->test(BillingDesk::class)
+            ->call('selectInvoice', $invoice->getRouteKey())
+            ->assertActionVisible('collectPayment')
+            ->assertActionHidden('applyDeposit');
+
+        app(DepositRecordingService::class)->record(
+            patientId: (string) $invoice->patient_id,
+            branchId: (string) $branch->id,
+            amount: '50.00',
+            method: PaymentMethod::Cash,
+            recordedBy: $user->id,
+        );
+
+        Livewire::actingAs($user)
+            ->test(BillingDesk::class)
+            ->call('selectInvoice', $invoice->getRouteKey())
             ->assertActionVisible('applyDeposit');
     }
 

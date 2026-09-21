@@ -231,7 +231,7 @@ class BillingDesk extends Page implements HasTable
                 ->visible(fn (): bool => (bool) $this->selectedInvoice !== null && ($this->selectedInvoice['can_collect_payment'] ?? false)),
             ApplyDepositAction::make()
                 ->mountUsing(fn (Action $action) => $action->arguments(['invoice_id' => $this->selectedInvoiceId]))
-                ->visible(fn (): bool => $this->selectedInvoiceId !== null),
+                ->visible(fn (): bool => ApplyDepositAction::isAvailableForInvoice($this->selectedInvoiceId)),
         ];
     }
 

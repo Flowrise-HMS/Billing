@@ -4,6 +4,7 @@ namespace Modules\Billing\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Billing\Services\Sms\Drivers\HubtelSmsDriver;
 
 class BillingSmsService
 {
@@ -15,15 +16,19 @@ class BillingSmsService
         }
 
         $driver = (string) config('billing.notifications.sms.driver', 'log');
-        if ($driver !== 'http') {
-            Log::info('billing.sms.notice', ['to' => $phone, 'message' => $message]);
 
-            return;
-        }
+        match ($driver) {
+            'hubtel' => app(HubtelSmsDriver::class)->send($phone, $message),
+            'http' => $this->sendViaHttp($phone, $message),
+            default => $this->logOnly($phone),
+        };
+    }
 
+    protected function sendViaHttp(string $phone, string $message): void
+    {
         $endpoint = (string) config('billing.notifications.sms.endpoint', '');
         if ($endpoint === '') {
-            Log::warning('billing.sms.endpoint_missing', ['to' => $phone]);
+            Log::channel('billing_sms')->warning('billing.sms.endpoint_missing', ['to' => $this->maskPhone($phone)]);
 
             return;
         }
@@ -40,6 +45,20 @@ class BillingSmsService
             'to' => $phone,
             'message' => $message,
         ])->throw();
+
+        Log::channel('billing_sms')->info('billing.sms.http_sent', ['to' => $this->maskPhone($phone)]);
+    }
+
+    protected function logOnly(string $phone): void
+    {
+        Log::channel('billing_sms')->info('billing.sms.notice', ['to' => $this->maskPhone($phone)]);
+    }
+
+    protected function maskPhone(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+
+        return $digits === '' ? '' : '***'.substr($digits, -4);
     }
 
     protected function normalizePhone(string $phone): string

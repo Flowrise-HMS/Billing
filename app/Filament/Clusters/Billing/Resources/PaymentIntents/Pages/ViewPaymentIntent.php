@@ -2,9 +2,9 @@
 
 namespace Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\Pages;
 
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Modules\Billing\Filament\Clusters\Billing\Resources\Invoices\InvoiceResource;
 use Modules\Billing\Filament\Clusters\Billing\Resources\PaymentIntents\PaymentIntentResource;
@@ -39,16 +39,16 @@ class ViewPaymentIntent extends ViewRecord
                         TextEntry::make('provider_reference')->copyable(),
                         TextEntry::make('line_ids')
                             ->label(__('Line IDs'))
-                            ->json()
+                            ->formatStateUsing(fn (mixed $state): string => json_encode($state) ?: '[]')
                             ->visible(fn ($state) => ! empty($state)),
                         TextEntry::make('checkout_url')->copyable()->limit(50),
                         TextEntry::make('expires_at')->dateTime(),
                         TextEntry::make('created_at')->dateTime(),
                         TextEntry::make('raw_response')
-                            ->json()
+                            ->formatStateUsing(fn (mixed $state): string => json_encode($state) ?: '{}')
                             ->visible(fn ($state) => ! empty($state)),
                         TextEntry::make('metadata')
-                            ->json()
+                            ->formatStateUsing(fn (mixed $state): string => json_encode($state) ?: '{}')
                             ->visible(fn ($state) => ! empty($state)),
                     ]),
             ]);

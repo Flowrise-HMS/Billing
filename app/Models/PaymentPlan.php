@@ -3,10 +3,12 @@
 namespace Modules\Billing\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Billing\Database\Factories\PaymentPlanFactory;
 use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Core\Models\CoreUser;
 
@@ -39,6 +41,11 @@ class PaymentPlan extends Model
         'frequency_days' => 'integer',
         'start_date' => 'date',
     ];
+
+    protected static function newFactory(): Factory
+    {
+        return PaymentPlanFactory::new();
+    }
 
     public function invoice(): BelongsTo
     {
