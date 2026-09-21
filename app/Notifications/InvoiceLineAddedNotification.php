@@ -7,34 +7,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Billing\Models\InvoiceLine;
-use Modules\Billing\Notifications\Concerns\BuildsPatientFacingChannels;
 use Modules\Billing\Notifications\Concerns\ResolvesInvoiceCheckoutUrl;
-use Modules\Core\Notifications\Concerns\RespectsNotificationSettings;
-use Modules\Core\Support\AppSettings;
+use Modules\Core\Notifications\Concerns\ResolvesNotificationChannels;
 
 class InvoiceLineAddedNotification extends Notification implements ShouldQueue
 {
-    use BuildsPatientFacingChannels, Queueable, ResolvesInvoiceCheckoutUrl, RespectsNotificationSettings;
+    use Queueable, ResolvesInvoiceCheckoutUrl, ResolvesNotificationChannels;
 
     public function __construct(protected InvoiceLine $line) {}
 
     public function via(object $notifiable): array
     {
-        $channels = $this->channelsFor($notifiable);
-
-        try {
-            $settings = app(AppSettings::class)->notifications();
-            $billing = app(AppSettings::class)->billing();
-
-            return $this->applyNotificationSettings(
-                $channels,
-                $settings->invoice_line_added_mail,
-                $settings->invoice_line_added_sms,
-                $billing->sms_enabled,
-            );
-        } catch (\Throwable) {
-            return $channels;
-        }
+        return $this->settingsChannels($notifiable, 'invoice_line_added_mail', 'invoice_line_added_sms');
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -8,34 +8,18 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Billing\Models\InvoiceLine;
 use Modules\Billing\Notifications\Concerns\BuildsLinePaymentUrl;
-use Modules\Billing\Notifications\Concerns\BuildsPatientFacingChannels;
 use Modules\Core\Enums\ServiceCategoryCode;
-use Modules\Core\Notifications\Concerns\RespectsNotificationSettings;
-use Modules\Core\Support\AppSettings;
+use Modules\Core\Notifications\Concerns\ResolvesNotificationChannels;
 
 class InvoiceLineOrderedNotification extends Notification implements ShouldQueue
 {
-    use BuildsLinePaymentUrl, BuildsPatientFacingChannels, Queueable, RespectsNotificationSettings;
+    use BuildsLinePaymentUrl, Queueable, ResolvesNotificationChannels;
 
     public function __construct(protected InvoiceLine $line) {}
 
     public function via(object $notifiable): array
     {
-        $channels = $this->channelsFor($notifiable);
-
-        try {
-            $settings = app(AppSettings::class)->notifications();
-            $billing = app(AppSettings::class)->billing();
-
-            return $this->applyNotificationSettings(
-                $channels,
-                $settings->invoice_line_ordered_mail,
-                $settings->invoice_line_ordered_sms,
-                $billing->sms_enabled,
-            );
-        } catch (\Throwable) {
-            return $channels;
-        }
+        return $this->settingsChannels($notifiable, 'invoice_line_ordered_mail', 'invoice_line_ordered_sms');
     }
 
     public function toMail(object $notifiable): MailMessage

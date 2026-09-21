@@ -46,7 +46,7 @@ flowchart LR
 - Work the cashier queue on the **Billing Desk** (Workspaces sidebar group; feature toggle "Billing desk").
 - Manage per-branch payment gateway settings (Paystack, Stripe, Flutterwave, Hubtel; keys stored encrypted per branch).
 - Process payment webhooks and checkout session flows (Payment intents, Webhook events).
-- Trigger reminders/notifications for unpaid bills (`invoices:check-overdue` daily at 08:00 with cooldown), issue notices, and settle pending charges from the Pharmacy POS (`PatientPendingChargesService`).
+- Trigger reminders/notifications for unpaid bills (`invoices:check-overdue` daily at 08:00 with cooldown), issue notices, "order placed" notices the moment a billable order lands on the encounter invoice (on by default), and settle pending charges from the Pharmacy POS (`PatientPendingChargesService`).
 - Auto-create invoices from clinical orders, appointment check-in and discharge, and enforce financial holds (settings page).
 
 ## How it works (simple)

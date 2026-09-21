@@ -7,34 +7,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Modules\Billing\Mail\InvoiceUnpaidMail;
 use Modules\Billing\Models\Invoice;
-use Modules\Billing\Notifications\Concerns\BuildsPatientFacingChannels;
 use Modules\Billing\Notifications\Concerns\ResolvesInvoiceCheckoutUrl;
-use Modules\Core\Notifications\Concerns\RespectsNotificationSettings;
-use Modules\Core\Support\AppSettings;
+use Modules\Core\Notifications\Concerns\ResolvesNotificationChannels;
 
 class InvoiceUnpaidNotification extends Notification implements ShouldQueue
 {
-    use BuildsPatientFacingChannels, Queueable, ResolvesInvoiceCheckoutUrl, RespectsNotificationSettings;
+    use Queueable, ResolvesInvoiceCheckoutUrl, ResolvesNotificationChannels;
 
     public function __construct(protected Invoice $invoice) {}
 
     public function via(object $notifiable): array
     {
-        $channels = $this->channelsFor($notifiable);
-
-        try {
-            $settings = app(AppSettings::class)->notifications();
-            $billing = app(AppSettings::class)->billing();
-
-            return $this->applyNotificationSettings(
-                $channels,
-                $settings->invoice_unpaid_mail,
-                $settings->invoice_unpaid_sms,
-                $billing->sms_enabled,
-            );
-        } catch (\Throwable) {
-            return $channels;
-        }
+        return $this->settingsChannels($notifiable, 'invoice_unpaid_mail', 'invoice_unpaid_sms');
     }
 
     public function toMail(object $notifiable): InvoiceUnpaidMail

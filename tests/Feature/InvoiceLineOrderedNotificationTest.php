@@ -4,6 +4,7 @@ namespace Modules\Billing\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Notifications\InvoiceLineAddedNotification;
@@ -34,32 +35,48 @@ class InvoiceLineOrderedNotificationTest extends TestCase
         $this->migrateModules(['Core', 'Patient', 'Clinical', 'Pharmacy', 'Billing']);
     }
 
-    public function test_settings_off_by_default_produces_no_channels(): void
+    public function test_ordered_notification_is_on_by_default_for_a_reachable_patient(): void
     {
-        // Notification::fake()'s assertNothingSent() can't be used here: Laravel
-        // queues a ShouldQueue notification unconditionally and only evaluates
-        // via() later, inside the queued job — so it would "look sent" to the
-        // fake even with every channel disabled. Assert via() directly instead.
-        [$item] = $this->seedRequestItem(isMedication: false, unitPrice: '45.00');
+        // Notification::fake() evaluates via() eagerly for queued notifications
+        // too, but the channel list is what matters here: assert it directly.
+        [$item, $patient] = $this->seedRequestItem(isMedication: false, unitPrice: '45.00');
+        $line = $this->syncedLine($item);
 
-        app(InvoiceLineSyncService::class)->syncFromRequestItem($item->fresh([
-            'serviceRequest.encounter',
-            'service.category',
-            'prescriptionDetail',
-        ]));
+        $this->assertSame(['mail', 'sms'], (new InvoiceLineOrderedNotification($line))->via($patient->fresh()));
+    }
 
-        $invoice = Invoice::query()->withoutGlobalScopes()
-            ->where('encounter_id', $item->serviceRequest->encounter_id)
-            ->first();
-        $line = $invoice->lines()->firstOrFail();
+    public function test_disabling_both_toggles_produces_no_channels(): void
+    {
+        NotificationSettings::fake(['invoice_line_ordered_mail' => false, 'invoice_line_ordered_sms' => false]);
 
+        [$item, $patient] = $this->seedRequestItem(isMedication: false, unitPrice: '45.00');
+        $line = $this->syncedLine($item);
+
+        $this->assertSame([], (new InvoiceLineOrderedNotification($line))->via($patient->fresh()));
+    }
+
+    public function test_patient_without_email_gets_sms_only_and_a_skip_is_logged_when_unreachable(): void
+    {
+        [$item, $patient] = $this->seedRequestItem(isMedication: false, unitPrice: '45.00');
+        $line = $this->syncedLine($item);
         $notification = new InvoiceLineOrderedNotification($line);
-        $this->assertSame([], $notification->via($invoice->patient));
+
+        $patient->forceFill(['email' => null])->saveQuietly();
+        $this->assertSame(['sms'], $notification->via($patient->fresh()));
+
+        Log::spy();
+        $patient->forceFill(['phone' => null])->saveQuietly();
+        $this->assertSame([], $notification->via($patient->fresh()));
+
+        Log::shouldHaveReceived('warning')->withArgs(fn (string $message, array $context): bool => $message === 'notification.skipped'
+            && $context['reason'] === 'no_route'
+            && $context['notifiable_id'] === $patient->id
+            && $context['has_email'] === false
+            && $context['has_phone'] === false);
     }
 
     public function test_lab_order_on_draft_invoice_notifies_with_settings_on(): void
     {
-        $this->enableOrderedNotifications();
         Notification::fake();
 
         [$item, $patient] = $this->seedRequestItem(isMedication: false, unitPrice: '45.00');
@@ -83,7 +100,6 @@ class InvoiceLineOrderedNotificationTest extends TestCase
 
     public function test_medication_order_does_not_send_the_order_notification(): void
     {
-        $this->enableOrderedNotifications();
         Notification::fake();
 
         [$item, $patient] = $this->seedRequestItem(isMedication: true, unitPrice: '1.50');
@@ -100,12 +116,19 @@ class InvoiceLineOrderedNotificationTest extends TestCase
         Notification::assertNotSentTo($patient, InvoiceLineOrderedNotification::class);
     }
 
-    protected function enableOrderedNotifications(): void
+    protected function syncedLine(RequestItem $item): \Modules\Billing\Models\InvoiceLine
     {
-        $settings = app(NotificationSettings::class);
-        $settings->invoice_line_ordered_mail = true;
-        $settings->invoice_line_ordered_sms = true;
-        $settings->save();
+        app(InvoiceLineSyncService::class)->syncFromRequestItem($item->fresh([
+            'serviceRequest.encounter',
+            'service.category',
+            'prescriptionDetail',
+        ]));
+
+        return Invoice::query()->withoutGlobalScopes()
+            ->where('encounter_id', $item->serviceRequest->encounter_id)
+            ->firstOrFail()
+            ->lines()
+            ->firstOrFail();
     }
 
     /**
