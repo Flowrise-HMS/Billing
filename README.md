@@ -116,7 +116,11 @@ Resources/{Resource}/
 ```bash
 php artisan module:migrate Billing
 php artisan invoices:check-overdue            # scheduled daily at 08:00
-php artisan test --compact Modules/Billing/tests   # 58 test files
+php artisan test --compact Modules/Billing/tests   # 74 test files
 ```
 
-8 migrations, 12 models, 8 Filament resources. Verified against code on 2026-09-20.
+8 migrations, 12 models, 8 Filament resources. Verified against code on 2026-11-24.
+
+## REST API
+
+When the Api module is enabled (token scope `billing`): `invoices` (`lines`, `remove-line`, `issue`, `void`; only drafts can be edited or deleted), `payments` (`refund`), `deposits` (`apply`), `payment-plans` (`cancel`). Recording or applying a deposit also needs `Create Payment`. Refunds of one payment, in the panel and over the API, can never add up to more than that payment (`PaymentRecordingService::refundableAmount()`). See the [API Reference](../../docs/developer-guide/api-reference.md).
