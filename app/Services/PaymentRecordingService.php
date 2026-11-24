@@ -150,4 +150,53 @@ class PaymentRecordingService
             return $payment->fresh(['allocations']);
         });
     }
+
+    /**
+     * Record a refund of (part of) a payment as a negative payment allocated
+     * back across the original payment's invoice lines, pro rata.
+     */
+    public function refund(Payment $payment, string $amount, ?string $reason = null, ?int $recordedBy = null, string $source = 'filament'): Payment
+    {
+        $payment->loadMissing('allocations');
+
+        if (bccomp($amount, '0', 2) <= 0) {
+            throw new InvalidArgumentException('The refund amount must be greater than zero.');
+        }
+
+        if (bccomp($amount, (string) $payment->amount, 2) > 0) {
+            throw new InvalidArgumentException('The refund exceeds the payment amount.');
+        }
+
+        $totalAllocated = '0';
+        foreach ($payment->allocations as $allocation) {
+            $totalAllocated = bcadd($totalAllocated, (string) $allocation->amount, 2);
+        }
+
+        if (bccomp($totalAllocated, '0', 2) <= 0) {
+            throw new InvalidArgumentException('This payment has no allocations to refund.');
+        }
+
+        $allocations = [];
+        foreach ($payment->allocations as $allocation) {
+            $ratio = bcdiv((string) $allocation->amount, $totalAllocated, 10);
+            $allocations[(string) $allocation->invoice_line_id] = bcsub('0', bcmul($ratio, $amount, 2), 2);
+        }
+
+        return $this->record(
+            allocations: $allocations,
+            method: PaymentMethod::Gateway,
+            gateway: $payment->gateway,
+            currency: $payment->currency,
+            patientId: $payment->patient_id,
+            branchId: (string) $payment->branch_id,
+            recordedBy: $recordedBy,
+            metadata: [
+                'source' => $source,
+                'action' => 'refund',
+                'original_payment_id' => $payment->id,
+                'reason' => $reason ?? '',
+            ],
+            type: PaymentType::Refund,
+        );
+    }
 }

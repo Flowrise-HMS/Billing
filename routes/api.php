@@ -3,7 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Billing\Http\Controllers\Api\BillingWebhookController;
 use Modules\Billing\Http\Controllers\Api\InvoiceCheckoutController;
+use Modules\Billing\Http\Controllers\Api\InvoiceController;
+use Modules\Billing\Http\Controllers\Api\PatientDepositController;
+use Modules\Billing\Http\Controllers\Api\PaymentController;
+use Modules\Billing\Http\Controllers\Api\PaymentPlanController;
 use Modules\Billing\Http\Controllers\Api\PaymentStatusController;
+use Modules\Core\Services\ApiRouteRegistrar;
 
 /*
 | The webhook stays outside ApiRouteRegistrar and outside auth: payment providers
@@ -24,4 +29,17 @@ Route::prefix('v1')->group(function () {
         Route::get('billing/payments/{payment}', [PaymentStatusController::class, 'show'])
             ->name('billing.payments.show');
     });
+});
+
+/*
+| Billing REST API (`/api/v1`, Sanctum + branch, token scope "billing").
+| Financial records are never deleted: invoices are voided, payments refunded.
+*/
+ApiRouteRegistrar::register(scope: 'billing', routes: function (): void {
+    InvoiceController::routes('invoices', ['index', 'show', 'store', 'update', 'destroy'], [
+        'lines' => 'addLine', 'remove-line' => 'removeLine', 'issue' => 'issue', 'void' => 'void',
+    ]);
+    PaymentController::routes('payments', ['index', 'show', 'store'], ['refund' => 'refund']);
+    PatientDepositController::routes('deposits', ['index', 'show', 'store'], ['apply' => 'apply']);
+    PaymentPlanController::routes('payment-plans', ['index', 'show', 'store'], ['cancel' => 'cancel']);
 });

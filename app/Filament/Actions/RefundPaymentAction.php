@@ -7,8 +7,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
-use Modules\Billing\Enums\PaymentMethod;
-use Modules\Billing\Enums\PaymentType;
 use Modules\Billing\Models\Payment;
 use Modules\Billing\Policies\PaymentPolicy;
 use Modules\Billing\Services\PaymentRecordingService;
@@ -45,47 +43,17 @@ class RefundPaymentAction
 
                 $refundAmount = (string) $data['amount'];
 
-                if (bccomp($refundAmount, '0', 2) <= 0) {
-                    return;
-                }
-
-                if (bccomp($refundAmount, (string) $payment->amount, 2) > 0) {
+                try {
+                    $service->refund($payment, $refundAmount, $data['reason'] ?? null, Auth::id());
+                } catch (\InvalidArgumentException $e) {
                     Notification::make()
                         ->danger()
                         ->title(__('Refund exceeds payment amount'))
+                        ->body($e->getMessage())
                         ->send();
 
                     return;
                 }
-
-                $totalAllocated = '0';
-                foreach ($payment->allocations as $alloc) {
-                    $totalAllocated = bcadd($totalAllocated, (string) $alloc->amount, 2);
-                }
-
-                $allocations = [];
-                foreach ($payment->allocations as $alloc) {
-                    $ratio = bcdiv((string) $alloc->amount, $totalAllocated, 10);
-                    $lineRefund = bcsub('0', bcmul($ratio, $refundAmount, 2), 2);
-                    $allocations[(string) $alloc->invoice_line_id] = $lineRefund;
-                }
-
-                $service->record(
-                    allocations: $allocations,
-                    method: PaymentMethod::Gateway,
-                    gateway: $payment->gateway,
-                    currency: $payment->currency,
-                    patientId: $payment->patient_id,
-                    branchId: (string) $payment->branch_id,
-                    recordedBy: Auth::id(),
-                    metadata: [
-                        'source' => 'filament',
-                        'action' => 'refund',
-                        'original_payment_id' => $payment->id,
-                        'reason' => $data['reason'] ?? '',
-                    ],
-                    type: PaymentType::Refund,
-                );
 
                 Notification::make()
                     ->success()
