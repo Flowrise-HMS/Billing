@@ -137,6 +137,10 @@ class InvoiceController extends ResourceApiController
             $unitPrice = (string) ($data['unit_price'] ?? $service?->getDefaultPrice() ?? '0');
             $discount = (string) ($data['discount_amount'] ?? '0');
 
+            if (bccomp($discount, bcmul($unitPrice, (string) $quantity, 2), 2) > 0) {
+                throw new \DomainException('The discount exceeds the line amount.');
+            }
+
             $invoice->lines()->create([
                 'service_id' => $service?->id,
                 'description' => $data['description'] ?? $service?->name,

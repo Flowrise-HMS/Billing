@@ -157,14 +157,43 @@ class PaymentRecordingService
      */
     public function refund(Payment $payment, string $amount, ?string $reason = null, ?int $recordedBy = null, string $source = 'filament'): Payment
     {
+        return DB::transaction(function () use ($payment, $amount, $reason, $recordedBy, $source): Payment {
+            // Serialise refunds of one payment so concurrent partial refunds cannot exceed it.
+            Payment::query()->withoutGlobalScopes()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
+
+            return $this->recordRefund($payment, $amount, $reason, $recordedBy, $source);
+        });
+    }
+
+    /**
+     * What is left to refund on a payment after earlier refunds of it.
+     */
+    public function refundableAmount(Payment $payment): string
+    {
+        $refunded = Payment::query()
+            ->withoutGlobalScopes()
+            ->where('type', PaymentType::Refund)
+            ->where('metadata->original_payment_id', $payment->getKey())
+            ->pluck('amount')
+            ->reduce(fn (string $sum, mixed $value): string => bcadd($sum, ltrim((string) $value, '-'), 2), '0');
+
+        return bcsub((string) $payment->amount, $refunded, 2);
+    }
+
+    protected function recordRefund(Payment $payment, string $amount, ?string $reason, ?int $recordedBy, string $source): Payment
+    {
         $payment->loadMissing('allocations');
 
         if (bccomp($amount, '0', 2) <= 0) {
             throw new InvalidArgumentException('The refund amount must be greater than zero.');
         }
 
-        if (bccomp($amount, (string) $payment->amount, 2) > 0) {
-            throw new InvalidArgumentException('The refund exceeds the payment amount.');
+        if (in_array($payment->type, [PaymentType::Refund, PaymentType::WriteOff], true)) {
+            throw new InvalidArgumentException('Refunds and write-offs cannot be refunded.');
+        }
+
+        if (bccomp($amount, $this->refundableAmount($payment), 2) > 0) {
+            throw new InvalidArgumentException('The refund exceeds the payment amount still refundable.');
         }
 
         $totalAllocated = '0';

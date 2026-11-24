@@ -8,6 +8,7 @@ use Modules\Billing\Http\Controllers\Api\PatientDepositController;
 use Modules\Billing\Http\Controllers\Api\PaymentController;
 use Modules\Billing\Http\Controllers\Api\PaymentPlanController;
 use Modules\Billing\Http\Controllers\Api\PaymentStatusController;
+use Modules\Core\Http\Middleware\EnsureApiTokenAbility;
 use Modules\Core\Services\ApiRouteRegistrar;
 
 /*
@@ -23,7 +24,7 @@ Route::prefix('v1')->group(function () {
     Route::post('billing/webhooks/{driver}/{branch}', [BillingWebhookController::class, 'handle'])
         ->name('billing.webhooks.handle');
 
-    Route::middleware(['auth:sanctum', 'api.branch'])->group(function () {
+    Route::middleware(['auth:sanctum', 'api.branch', EnsureApiTokenAbility::class.':billing'])->group(function () {
         Route::post('billing/invoices/{invoice}/checkout', [InvoiceCheckoutController::class, 'store'])
             ->name('billing.invoices.checkout');
         Route::get('billing/payments/{payment}', [PaymentStatusController::class, 'show'])

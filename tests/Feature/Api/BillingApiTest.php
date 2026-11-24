@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Str;
 use Modules\Billing\Enums\InvoiceStatus;
 use Modules\Billing\Enums\PaymentType;
 use Modules\Billing\Models\Invoice;
@@ -65,6 +66,8 @@ describe('deposits', function () use ($modules): void {
     ApiResourceTestSuite::register([
         'uri' => 'deposits',
         'subject' => 'PatientDeposit',
+        // Recording a deposit records a payment.
+        'permissions' => ['create' => ['Create PatientDeposit', 'Create Payment']],
         'scope' => 'billing',
         'modules' => $modules,
         'make' => fn (TestCase $test, Branch $branch, array $attributes = []) => PatientDeposit::factory()->create(['branch_id' => $branch->id, 'patient_id' => billingApiPatient($branch)->id, ...$attributes]),
@@ -133,6 +136,29 @@ describe('billing workflow', function () use ($modules): void {
         $this->getJson("/api/v1/invoices/{$id}")->assertJsonPath('data.balance_due', '50.00');
     });
 
+    it('caps the total refunded at the payment amount', function (): void {
+        $patient = billingApiPatient($this->branch);
+        $id = $this->postJson('/api/v1/invoices', ['patient_id' => $patient->id])->json('data.id');
+        $this->postJson("/api/v1/invoices/{$id}/lines", ['service_id' => Service::factory()->create()->id, 'unit_price' => 100])->assertOk();
+        $this->postJson("/api/v1/invoices/{$id}/issue")->assertOk();
+
+        // Two payments on one line: the line alone would allow refunding more than the first payment.
+        $first = $this->postJson('/api/v1/payments', ['invoice_id' => $id, 'amount' => 40, 'method' => 'cash'])->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/payments', ['invoice_id' => $id, 'amount' => 60, 'method' => 'cash'])->assertCreated();
+
+        $refund = $this->postJson("/api/v1/payments/{$first}/refund", ['amount' => 25])->assertOk()->json('data.id');
+        $this->postJson("/api/v1/payments/{$first}/refund", ['amount' => 25])->assertUnprocessable();
+        $this->postJson("/api/v1/payments/{$first}/refund", ['amount' => 15])->assertOk();
+        $this->postJson("/api/v1/payments/{$refund}/refund", ['amount' => 5])->assertUnprocessable();
+    });
+
+    it('needs the payment permission to apply a deposit', function (): void {
+        $deposit = PatientDeposit::factory()->create(['branch_id' => $this->branch->id, 'patient_id' => billingApiPatient($this->branch)->id]);
+        $this->user->revokePermissionTo('Create Payment');
+
+        $this->postJson("/api/v1/deposits/{$deposit->id}/apply", ['invoice_id' => (string) Str::uuid(), 'amount' => 1])->assertForbidden();
+    });
+
     it('voids an issued unpaid invoice', function (): void {
         $invoice = billingApiInvoice($this->branch, ['status' => InvoiceStatus::Issued, 'issued_at' => now()]);
 
@@ -172,5 +198,6 @@ describe('billing workflow', function () use ($modules): void {
             ->json('data.id');
 
         $this->postJson("/api/v1/payment-plans/{$planId}/cancel")->assertOk()->assertJsonPath('data.status', 'cancelled');
+        $this->postJson("/api/v1/payment-plans/{$planId}/cancel")->assertUnprocessable();
     });
 });

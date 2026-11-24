@@ -58,6 +58,7 @@ class PatientDepositController extends ResourceApiController
 
     protected function createRecord(array $data): Model
     {
+        $this->requirePermission('Create Payment');
         $patient = Patient::query()->findOrFail($data['patient_id']);
 
         return $this->deposits->record(
@@ -84,6 +85,8 @@ class PatientDepositController extends ResourceApiController
         ]);
 
         return $this->act($id, 'update', function (PatientDeposit $deposit) use ($data): PatientDeposit {
+            // Applying a deposit records a payment, so the panel's payment permission applies.
+            $this->requirePermission('Create Payment');
             $invoice = Invoice::query()->findOrFail($data['invoice_id']);
             $this->applications->apply($deposit, $invoice, number_format((float) $data['amount'], 2, '.', ''), null, auth()->id());
 

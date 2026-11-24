@@ -5,6 +5,7 @@ namespace Modules\Billing\Http\Controllers\Api;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Billing\Enums\PaymentPlanStatus;
 use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\PaymentPlan;
 use Modules\Billing\Models\PaymentPlanInstallment;
@@ -85,6 +86,7 @@ class PaymentPlanController extends ResourceApiController
     public function cancel(string $id): JsonResponse
     {
         return $this->act($id, 'update', function (PaymentPlan $plan): PaymentPlan {
+            $this->requireStatus($plan, [PaymentPlanStatus::Active], 'Only active payment plans can be cancelled.');
             $this->plans->cancelPlan($plan);
 
             return $plan->refresh();

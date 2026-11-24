@@ -28,7 +28,7 @@ class RefundPaymentAction
                     ->numeric()
                     ->minValue(0.01)
                     ->required()
-                    ->helperText(fn ($record) => __('Max refund: :amount', ['amount' => number_format((float) ($record?->amount ?? 0), 2)])),
+                    ->helperText(fn ($record) => __('Max refund: :amount', ['amount' => number_format((float) ($record instanceof Payment ? app(PaymentRecordingService::class)->refundableAmount($record) : 0), 2)])),
                 TextInput::make('reason')
                     ->label(__('Reason'))
                     ->maxLength(255),

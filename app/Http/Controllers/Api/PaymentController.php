@@ -71,7 +71,7 @@ class PaymentController extends ResourceApiController
 
         return $this->payments->record(
             allocations: $allocations,
-            method: PaymentMethod::from($data['method']),
+            method: enum_from(PaymentMethod::class, $data['method']),
             gateway: 'manual',
             currency: $invoice->currency ?? 'GHS',
             patientId: $invoice->patient_id,
