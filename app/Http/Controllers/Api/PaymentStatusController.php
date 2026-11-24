@@ -7,6 +7,11 @@ use Modules\Billing\Models\Payment;
 use Modules\Core\Http\Controllers\Api\ApiController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * @group Billing
+ *
+ * Payment status lookup (e.g. after a gateway redirect).
+ */
 class PaymentStatusController extends ApiController
 {
     /**

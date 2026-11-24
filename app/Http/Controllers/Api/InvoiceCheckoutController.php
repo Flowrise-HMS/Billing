@@ -9,6 +9,11 @@ use Modules\Billing\Services\CheckoutSessionService;
 use Modules\Core\Http\Controllers\Api\ApiController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * @group Billing
+ *
+ * Start an online (gateway) checkout for an invoice.
+ */
 class InvoiceCheckoutController extends ApiController
 {
     public function __construct(
