@@ -78,7 +78,7 @@ class PayInvoiceLineControllerTest extends TestCase
         $this->get($url)->assertRedirect('https://checkout.paystack.com/xyz');
         $this->get($url)->assertRedirect('https://checkout.paystack.com/xyz');
 
-        $this->assertSame(1, PaymentIntent::query()->where('line_ids', json_encode([$line->id]))->count());
+        $this->assertSame(1, PaymentIntent::query()->get()->filter(fn (PaymentIntent $intent): bool => $intent->line_ids === [$line->id])->count());
     }
 
     public function test_already_paid_line_shows_confirmation_without_calling_gateway(): void
